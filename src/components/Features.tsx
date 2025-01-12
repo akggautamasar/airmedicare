@@ -1,25 +1,25 @@
-import { Calendar, Search, Stethoscope, Pills } from "lucide-react";
+import { Calendar, Search, Stethoscope, Pill } from "lucide-react";
 
 const features = [
   {
     name: "Find Doctors",
-    description: "Search and find the best doctors near you based on specialization and ratings.",
+    description: "Search from over 1000+ doctors across 50+ specialties. Read patient reviews and book appointments instantly.",
     icon: Search,
   },
   {
     name: "Book Appointments",
-    description: "Schedule appointments with doctors at your preferred time slots.",
+    description: "Choose from available time slots and schedule appointments with top doctors. Get instant confirmation via SMS and email.",
     icon: Calendar,
   },
   {
     name: "Health Information",
-    description: "Access comprehensive information about diseases and treatments.",
+    description: "Access detailed information about 500+ diseases, symptoms, and treatments. Get expert medical advice and tips.",
     icon: Stethoscope,
   },
   {
     name: "Medicine Database",
-    description: "Browse through our extensive database of medicines and their details.",
-    icon: Pills,
+    description: "Browse through 10,000+ medicines with detailed information about dosage, side effects, and pricing. Find nearby pharmacies.",
+    icon: Pill,
   },
 ];
 
@@ -32,7 +32,7 @@ export const Features = () => {
             Comprehensive Healthcare Solutions
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Everything you need for your healthcare journey in one place
+            Trusted by over 100,000+ users and 1000+ healthcare providers
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
