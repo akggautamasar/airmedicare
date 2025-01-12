@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { HospitalSearch } from "@/components/HospitalSearch";
+import { YouTubeVideos } from "@/components/YouTubeVideos";
 
 const Index = () => {
   return (
@@ -10,6 +11,7 @@ const Index = () => {
       <Hero />
       <HospitalSearch />
       <Features />
+      <YouTubeVideos />
     </div>
   );
 };
