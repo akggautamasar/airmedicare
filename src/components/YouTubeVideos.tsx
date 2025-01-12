@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Play } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Video {
   id: string;
@@ -31,6 +38,16 @@ export const YouTubeVideos = () => {
         title: "Understanding Common Health Issues",
         thumbnail: "https://img.youtube.com/vi/VIDEO_ID_3/maxresdefault.jpg",
       },
+      {
+        id: "video4",
+        title: "Daily Health Routines",
+        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_4/maxresdefault.jpg",
+      },
+      {
+        id: "video5",
+        title: "Wellness Tips & Tricks",
+        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_5/maxresdefault.jpg",
+      },
     ];
     setVideos(sampleVideos);
   }, []);
@@ -40,47 +57,62 @@ export const YouTubeVideos = () => {
   };
 
   return (
-    <div className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">
-            Health & Medical Videos
+            Quick Health Tips
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Watch our informative videos about health and medical topics
+            Watch our short, informative videos about health and medical topics
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {videos.map((video) => (
-            <Card
-              key={video.id}
-              className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleVideoClick(video.id)}
-            >
-              <div className="relative">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Play className="w-12 h-12 text-white" />
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
-                  {video.title}
-                </h3>
-              </div>
-            </Card>
-          ))}
+        
+        <div className="relative px-12">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {videos.map((video) => (
+                <CarouselItem key={video.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                  <Card
+                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                    onClick={() => handleVideoClick(video.id)}
+                  >
+                    <div className="relative aspect-[9/16]">
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                        <h3 className="text-white font-semibold text-lg line-clamp-2">
+                          {video.title}
+                        </h3>
+                      </div>
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <Play className="w-16 h-16 text-white" />
+                      </div>
+                    </div>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
         </div>
+
         <div className="text-center mt-8">
           <a
             href={`https://www.youtube.com/playlist?list=${playlistId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-medical-primary hover:text-medical-dark font-medium"
+            className="inline-flex items-center gap-2 text-medical-primary hover:text-medical-dark font-medium transition-colors"
           >
             View all videos on YouTube
           </a>
