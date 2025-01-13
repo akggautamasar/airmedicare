@@ -3,7 +3,8 @@ import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { LocationSearch } from "@/components/LocationSearch";
 import { HospitalSearch } from "@/components/HospitalSearch";
-import { YouTubeVideos } from "@/components/YouTubeVideos";
+import { MedicineSearch } from "@/components/MedicineSearch";
+import { HealthRecords } from "@/components/HealthRecords";
 
 const Index = () => {
   return (
@@ -13,7 +14,8 @@ const Index = () => {
       <LocationSearch />
       <Features />
       <HospitalSearch />
-      <YouTubeVideos />
+      <MedicineSearch />
+      <HealthRecords />
     </div>
   );
 };
