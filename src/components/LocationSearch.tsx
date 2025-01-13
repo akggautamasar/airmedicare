@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, MapPin, Navigation } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -14,7 +14,6 @@ import { useToast } from './ui/use-toast';
 interface Location {
   latitude: number;
   longitude: number;
-  address?: string;
 }
 
 interface Facility {
@@ -33,40 +32,18 @@ export const LocationSearch = () => {
   const [facilityType, setFacilityType] = useState('hospital');
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [mapboxToken, setMapboxToken] = useState('');
   const { toast } = useToast();
-
-  useEffect(() => {
-    // For development purposes, you can input your Mapbox token here
-    const tokenInput = window.prompt('Please enter your Mapbox public token (this is temporary for development)');
-    if (tokenInput) {
-      setMapboxToken(tokenInput);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (mapboxToken) {
-      getUserLocation();
-    }
-  }, [mapboxToken]);
 
   const getUserLocation = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
-          try {
-            const address = await reverseGeocode(latitude, longitude);
-            setUserLocation({ latitude, longitude, address });
-          } catch (error) {
-            console.error('Reverse geocoding error:', error);
-            toast({
-              title: 'Location Error',
-              description: 'Unable to get your exact address. Please enter it manually.',
-              variant: 'destructive',
-            });
-          }
+          toast({
+            title: 'Location Found',
+            description: `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`,
+          });
         },
         (error) => {
           console.error('Geolocation error:', error);
@@ -77,28 +54,6 @@ export const LocationSearch = () => {
           });
         }
       );
-    }
-  };
-
-  const reverseGeocode = async (latitude: number, longitude: number) => {
-    if (!mapboxToken) {
-      throw new Error('Mapbox token not provided');
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapboxToken}`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Geocoding failed with status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.features[0]?.place_name || '';
-    } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      throw error;
     }
   };
 
@@ -148,7 +103,9 @@ export const LocationSearch = () => {
         <div className="flex items-center gap-2">
           <MapPin className="text-medical-primary" />
           <span className="text-gray-600">
-            {userLocation?.address || 'Detecting location...'}
+            {userLocation 
+              ? `Lat: ${userLocation.latitude.toFixed(4)}, Long: ${userLocation.longitude.toFixed(4)}`
+              : 'Location not detected'}
           </span>
           <Button
             variant="ghost"
