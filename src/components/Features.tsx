@@ -1,4 +1,4 @@
-import { Calendar, Search, Stethoscope, Pill } from "lucide-react";
+import { Calendar, Search, Stethoscope, Pill, FileText, Truck, Heart, Receipt } from "lucide-react";
 
 const features = [
   {
@@ -7,19 +7,39 @@ const features = [
     icon: Search,
   },
   {
-    name: "Book Appointments",
-    description: "Choose from available time slots and schedule appointments with top doctors. Get instant confirmation via SMS and email.",
-    icon: Calendar,
+    name: "Medicine Delivery",
+    description: "Order medicines online and get them delivered to your doorstep within 2 hours. Track your delivery in real-time.",
+    icon: Truck,
   },
   {
-    name: "Health Information",
-    description: "Access detailed information about 500+ diseases, symptoms, and treatments. Get expert medical advice and tips.",
-    icon: Stethoscope,
+    name: "Health Records",
+    description: "Store and access your medical records, prescriptions, and lab reports securely. Share them with doctors instantly.",
+    icon: FileText,
   },
   {
     name: "Medicine Database",
     description: "Browse through 10,000+ medicines with detailed information about dosage, side effects, and pricing. Find nearby pharmacies.",
     icon: Pill,
+  },
+  {
+    name: "Lab Tests",
+    description: "Book lab tests online and get samples collected from your home. Get reports digitally within 24 hours.",
+    icon: Stethoscope,
+  },
+  {
+    name: "Health Monitor",
+    description: "Track your vital health metrics, set medication reminders, and get personalized health insights.",
+    icon: Heart,
+  },
+  {
+    name: "Prescriptions",
+    description: "Upload your prescriptions and get medicines delivered. Auto-refill option available for regular medications.",
+    icon: Receipt,
+  },
+  {
+    name: "Appointments",
+    description: "Book doctor appointments, lab tests, and health checkups. Get instant confirmations and reminders.",
+    icon: Calendar,
   },
 ];
 
@@ -29,10 +49,10 @@ export const Features = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">
-            Comprehensive Healthcare Solutions
+            Complete Healthcare Solutions
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Trusted by over 100,000+ users and 1000+ healthcare providers
+            Your one-stop destination for all healthcare needs
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">

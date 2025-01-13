@@ -12,6 +12,7 @@ const Index = () => {
       <Hero />
       <LocationSearch />
       <Features />
+      <HospitalSearch />
       <YouTubeVideos />
     </div>
   );
