@@ -11,8 +11,6 @@ import {
 } from './ui/select';
 import { useToast } from './ui/use-toast';
 
-const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN'; // Replace with your Mapbox token
-
 interface Location {
   latitude: number;
   longitude: number;
@@ -35,11 +33,22 @@ export const LocationSearch = () => {
   const [facilityType, setFacilityType] = useState('hospital');
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    getUserLocation();
+    // For development purposes, you can input your Mapbox token here
+    const tokenInput = window.prompt('Please enter your Mapbox public token (this is temporary for development)');
+    if (tokenInput) {
+      setMapboxToken(tokenInput);
+    }
   }, []);
+
+  useEffect(() => {
+    if (mapboxToken) {
+      getUserLocation();
+    }
+  }, [mapboxToken]);
 
   const getUserLocation = () => {
     if ('geolocation' in navigator) {
@@ -47,10 +56,20 @@ export const LocationSearch = () => {
         async (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
-          const address = await reverseGeocode(latitude, longitude);
-          setUserLocation({ latitude, longitude, address });
+          try {
+            const address = await reverseGeocode(latitude, longitude);
+            setUserLocation({ latitude, longitude, address });
+          } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            toast({
+              title: 'Location Error',
+              description: 'Unable to get your exact address. Please enter it manually.',
+              variant: 'destructive',
+            });
+          }
         },
         (error) => {
+          console.error('Geolocation error:', error);
           toast({
             title: 'Location Error',
             description: 'Unable to get your location. Please enter it manually.',
@@ -62,15 +81,24 @@ export const LocationSearch = () => {
   };
 
   const reverseGeocode = async (latitude: number, longitude: number) => {
+    if (!mapboxToken) {
+      throw new Error('Mapbox token not provided');
+    }
+
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapboxToken}`
       );
+      
+      if (!response.ok) {
+        throw new Error(`Geocoding failed with status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      return data.features[0]?.place_name;
+      return data.features[0]?.place_name || '';
     } catch (error) {
       console.error('Reverse geocoding error:', error);
-      return '';
+      throw error;
     }
   };
 
