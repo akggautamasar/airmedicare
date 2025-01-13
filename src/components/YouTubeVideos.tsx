@@ -17,44 +17,65 @@ interface Video {
 
 export const YouTubeVideos = () => {
   const [videos, setVideos] = useState<Video[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const playlistId = "PL7baHLYeLWk3uosvni7zdkGZ3f7gQG1V5";
+  const API_KEY = "AIzaSyBrjwtI5UVNwlboA5l9twUA42iqs21DI6U";
 
   useEffect(() => {
-    // For now, we'll use a few videos from the playlist as example
-    // In a production app, you would fetch this from YouTube API
-    const sampleVideos = [
-      {
-        id: "video1",
-        title: "Health Tips for Better Living",
-        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_1/maxresdefault.jpg",
-      },
-      {
-        id: "video2",
-        title: "Medical Advice and Guidelines",
-        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_2/maxresdefault.jpg",
-      },
-      {
-        id: "video3",
-        title: "Understanding Common Health Issues",
-        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_3/maxresdefault.jpg",
-      },
-      {
-        id: "video4",
-        title: "Daily Health Routines",
-        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_4/maxresdefault.jpg",
-      },
-      {
-        id: "video5",
-        title: "Wellness Tips & Tricks",
-        thumbnail: "https://img.youtube.com/vi/VIDEO_ID_5/maxresdefault.jpg",
-      },
-    ];
-    setVideos(sampleVideos);
+    const fetchVideos = async () => {
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=10&playlistId=${playlistId}&key=${API_KEY}`
+        );
+        const data = await response.json();
+        
+        const formattedVideos = data.items.map((item: any) => ({
+          id: item.snippet.resourceId.videoId,
+          title: item.snippet.title,
+          thumbnail: item.snippet.thumbnails.high.url || item.snippet.thumbnails.default.url,
+        }));
+        
+        setVideos(formattedVideos);
+      } catch (error) {
+        console.error("Error fetching YouTube videos:", error);
+        // Fallback to sample data if API fails
+        const sampleVideos = [
+          {
+            id: "video1",
+            title: "Health Tips for Better Living",
+            thumbnail: "https://img.youtube.com/vi/VIDEO_ID_1/maxresdefault.jpg",
+          },
+          {
+            id: "video2",
+            title: "Medical Advice and Guidelines",
+            thumbnail: "https://img.youtube.com/vi/VIDEO_ID_2/maxresdefault.jpg",
+          },
+          {
+            id: "video3",
+            title: "Understanding Common Health Issues",
+            thumbnail: "https://img.youtube.com/vi/VIDEO_ID_3/maxresdefault.jpg",
+          },
+        ];
+        setVideos(sampleVideos);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVideos();
   }, []);
 
   const handleVideoClick = (videoId: string) => {
     window.open(`https://www.youtube.com/watch?v=${videoId}`, "_blank");
   };
+
+  if (isLoading) {
+    return (
+      <div className="py-16 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-medical-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
