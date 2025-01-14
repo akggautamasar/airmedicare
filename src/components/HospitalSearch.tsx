@@ -12,13 +12,13 @@ import {
 import { upMedicalFacilities, upDistricts, MedicalFacility } from "@/data/upMedicalFacilities";
 
 export const HospitalSearch = () => {
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [facilityType, setFacilityType] = useState<string>("all");
   const [facilities, setFacilities] = useState<MedicalFacility[]>(upMedicalFacilities);
 
   const handleSearch = () => {
     const filtered = upMedicalFacilities.filter((facility) => {
-      const districtMatch = !selectedDistrict || facility.district.toLowerCase() === selectedDistrict.toLowerCase();
+      const districtMatch = selectedDistrict === "all" || facility.district.toLowerCase() === selectedDistrict.toLowerCase();
       const typeMatch = facilityType === "all" || facility.type === facilityType;
       return districtMatch && typeMatch;
     });
@@ -53,7 +53,7 @@ export const HospitalSearch = () => {
             <SelectValue placeholder="Select District" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Districts</SelectItem>
+            <SelectItem value="all">All Districts</SelectItem>
             {upDistricts.map((district) => (
               <SelectItem key={district} value={district}>
                 {district.charAt(0).toUpperCase() + district.slice(1)}
