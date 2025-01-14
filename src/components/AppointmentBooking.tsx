@@ -120,22 +120,6 @@ export const AppointmentBooking = ({
 
       if (insertError) throw insertError;
 
-      // Send notification email
-      const { error: emailError } = await supabase
-        .functions.invoke('send-appointment-email', {
-          body: {
-            email: user.email,
-            name: user.name,
-            doctorName,
-            hospitalName,
-            date: selectedDate,
-            time: scheduledTime,
-            tokenNumber,
-          },
-        });
-
-      if (emailError) console.error('Error sending email:', emailError);
-
       toast.success(`Appointment booked successfully! Your token number is ${tokenNumber}`);
       setIsOpen(false);
     } catch (error) {
