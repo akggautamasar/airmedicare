@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Globe, Menu, X } from "lucide-react";
 import { LoginModal } from "./LoginModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,9 +16,9 @@ export const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-medical-primary">
+              <Link to="/" className="text-2xl font-bold text-medical-primary">
                 Airmedicare
-              </span>
+              </Link>
             </div>
           </div>
 
@@ -25,7 +26,9 @@ export const Navbar = () => {
           <div className="hidden sm:flex sm:items-center sm:space-x-4">
             <Button variant="ghost">Find Doctors</Button>
             <Button variant="ghost">Book Appointment</Button>
-            <Button variant="ghost">Medicines</Button>
+            <Link to="/buy-medicine">
+              <Button variant="ghost">Buy Medicines</Button>
+            </Link>
             <Button
               variant="outline"
               size="icon"
@@ -64,9 +67,11 @@ export const Navbar = () => {
             <Button variant="ghost" className="w-full justify-start">
               Book Appointment
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Medicines
-            </Button>
+            <Link to="/buy-medicine">
+              <Button variant="ghost" className="w-full justify-start">
+                Buy Medicines
+              </Button>
+            </Link>
             <Button
               variant="outline"
               className="w-full justify-start"

@@ -3,7 +3,6 @@ import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { LocationSearch } from "@/components/LocationSearch";
 import { HospitalSearch } from "@/components/HospitalSearch";
-import { MedicineSearch } from "@/components/MedicineSearch";
 import { HealthRecords } from "@/components/HealthRecords";
 
 const Index = () => {
@@ -14,7 +13,6 @@ const Index = () => {
       <LocationSearch />
       <Features />
       <HospitalSearch />
-      <MedicineSearch />
       <HealthRecords />
     </div>
   );
