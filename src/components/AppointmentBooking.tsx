@@ -20,6 +20,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
+import { initializeRazorpay, processPayment, createRazorpayOrder } from "@/lib/razorpay";
 
 interface AppointmentBookingProps {
   doctorId: string;
@@ -57,6 +58,13 @@ export const AppointmentBooking = ({
         return;
       }
 
+      // Initialize Razorpay
+      const res = await initializeRazorpay();
+      if (!res) {
+        toast.error("Razorpay SDK failed to load");
+        return;
+      }
+
       // Get the latest token number for the selected date
       const { data: existingAppointments, error: fetchError } = await supabase
         .from('appointments')
@@ -77,6 +85,20 @@ export const AppointmentBooking = ({
         ? consultationFee * 0.1 
         : consultationFee;
 
+      // Create Razorpay order
+      const order = await createRazorpayOrder(paymentAmount);
+      
+      // Process payment
+      const paymentResponse = await processPayment({
+        amount: paymentAmount,
+        orderId: order.id,
+        prefill: {
+          name: user.name,
+          email: user.email,
+          contact: user.phone,
+        },
+      });
+
       // Create appointment record
       const { error: insertError } = await supabase
         .from('appointments')
@@ -90,6 +112,8 @@ export const AppointmentBooking = ({
             scheduled_time: scheduledTime,
             payment_status: paymentType,
             payment_amount: paymentAmount,
+            razorpay_order_id: order.id,
+            razorpay_payment_id: paymentResponse.razorpay_payment_id,
             status: 'confirmed'
           }
         ]);
