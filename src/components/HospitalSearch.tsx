@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { upMedicalFacilities, upDistricts, MedicalFacility } from "@/data/upMedicalFacilities";
+import { AppointmentBooking } from "./AppointmentBooking";
 
 export const HospitalSearch = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -126,6 +127,13 @@ export const HospitalSearch = () => {
                         <p className="text-gray-500 text-xs">
                           Available: {doctor.availability.join(", ")}
                         </p>
+                        <AppointmentBooking
+                          doctorId={`${facility.id}-${index}`}
+                          doctorName={doctor.name}
+                          hospitalId={facility.id}
+                          hospitalName={facility.name}
+                          consultationFee={500} // Example fee
+                        />
                       </div>
                     ))}
                   </div>

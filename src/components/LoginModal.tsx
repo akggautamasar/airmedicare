@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export const LoginModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,32 +19,41 @@ export const LoginModal = () => {
   const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState("");
-  const { login, signup } = useAuth();
-  const { toast } = useToast();
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const { login, signup, sendOTP, verifyOTP } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (isSignup) {
-        await signup(email, password, name);
-        toast({
-          title: "Account created successfully!",
-          description: "Welcome to Airmedicare",
-        });
+        if (!phone) {
+          toast.error("Phone number is required");
+          return;
+        }
+        await signup(email, password, name, phone);
+        setIsVerifying(true);
+        await sendOTP(phone);
       } else {
         await login(email, password);
-        toast({
-          title: "Logged in successfully!",
-          description: "Welcome back",
-        });
+        setIsOpen(false);
       }
-      setIsOpen(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const verified = await verifyOTP(phone, otp);
+      if (verified) {
+        setIsOpen(false);
+        setIsVerifying(false);
+      }
+    } catch (error) {
+      toast.error("Invalid OTP. Please try again.");
     }
   };
 
@@ -55,57 +64,92 @@ export const LoginModal = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isSignup ? "Create Account" : "Login"}</DialogTitle>
+          <DialogTitle>{isVerifying ? "Verify OTP" : isSignup ? "Create Account" : "Login"}</DialogTitle>
           <DialogDescription>
-            {isSignup
+            {isVerifying
+              ? "Enter the OTP sent to your phone"
+              : isSignup
               ? "Sign up to access all features"
               : "Login to your account to continue"}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignup && (
+        {isVerifying ? (
+          <form onSubmit={handleVerifyOTP} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="otp">Enter OTP</Label>
               <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                id="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP"
               />
             </div>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@email.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col space-y-2">
-            <Button type="submit">{isSignup ? "Sign Up" : "Login"}</Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsSignup(!isSignup)}
-            >
-              {isSignup
-                ? "Already have an account? Login"
-                : "Don't have an account? Sign Up"}
+            <Button type="submit" className="w-full">
+              Verify OTP
             </Button>
-          </div>
-        </form>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignup && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+91XXXXXXXXXX"
+                    required
+                  />
+                </div>
+              </>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@email.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Button type="submit">{isSignup ? "Sign Up" : "Login"}</Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsSignup(!isSignup)}
+              >
+                {isSignup
+                  ? "Already have an account? Login"
+                  : "Don't have an account? Sign Up"}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
