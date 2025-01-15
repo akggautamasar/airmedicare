@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AuthError, AuthApiError } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -55,22 +56,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (email: string, password: string, name: string, phone: string) => {
     try {
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        phone,
+        phone: formattedPhone,
         options: {
           data: {
             name,
-            phone,
+            phone: formattedPhone,
           },
         },
       });
 
       if (error) throw error;
-      toast.success('Verification email sent! Please check your inbox.');
+      toast.success('Account created successfully! Please verify your phone number.');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof AuthApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
       throw error;
     }
   };
@@ -85,7 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       toast.success('Logged in successfully!');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof AuthApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
       throw error;
     }
   };
@@ -97,83 +108,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       toast.success('Logged out successfully!');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof AuthApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
       throw error;
     }
   };
 
   const sendOTP = async (phone: string) => {
     try {
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      
       // Track OTP attempts
       const { data: attempts, error: fetchError } = await supabase
         .from('otp_attempts')
         .select('attempts, last_attempt')
-        .eq('phone', phone)
+        .eq('phone', formattedPhone)
         .single();
 
       if (!fetchError && attempts) {
         const lastAttempt = new Date(attempts.last_attempt);
         const now = new Date();
-        const timeDiff = (now.getTime() - lastAttempt.getTime()) / 1000; // in seconds
+        const timeDiff = (now.getTime() - lastAttempt.getTime()) / 1000;
 
-        if (attempts.attempts >= 3 && timeDiff < 300) { // 5 minutes cooldown
+        if (attempts.attempts >= 3 && timeDiff < 300) {
           throw new Error('Too many attempts. Please try again in 5 minutes.');
         }
 
-        // Update attempts count
         await supabase
           .from('otp_attempts')
           .update({
             attempts: attempts.attempts + 1,
             last_attempt: new Date().toISOString(),
           })
-          .eq('phone', phone);
+          .eq('phone', formattedPhone);
       } else {
-        // Create new attempt record
         await supabase
           .from('otp_attempts')
           .insert({
-            phone,
+            phone: formattedPhone,
             attempts: 1,
             user_id: user?.id,
           });
       }
 
       const { error } = await supabase.auth.signInWithOtp({
-        phone,
+        phone: formattedPhone,
       });
       
       if (error) throw error;
       toast.success('OTP sent successfully!');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof AuthApiError) {
+        toast.error(error.message);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to send OTP. Please try again.');
+      }
       throw error;
     }
   };
 
   const verifyOTP = async (phone: string, otp: string) => {
     try {
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      
       const { error } = await supabase.auth.verifyOtp({
-        phone,
+        phone: formattedPhone,
         token: otp,
         type: 'sms',
       });
 
       if (error) throw error;
 
-      // Reset attempts on successful verification
       await supabase
         .from('otp_attempts')
         .update({
           attempts: 0,
           last_attempt: new Date().toISOString(),
         })
-        .eq('phone', phone);
+        .eq('phone', formattedPhone);
 
       toast.success('Phone number verified successfully!');
       return true;
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof AuthApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('Invalid OTP. Please try again.');
+      }
       return false;
     }
   };
