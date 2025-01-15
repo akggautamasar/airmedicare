@@ -52,7 +52,6 @@ export const LoginModal = () => {
           return;
         }
 
-        // Format phone number to ensure it starts with +
         const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
         console.log("Attempting signup with phone:", formattedPhone);
 
@@ -132,8 +131,8 @@ export const LoginModal = () => {
                 maxLength={6}
                 render={({ slots }) => (
                   <InputOTPGroup>
-                    {slots.map((slot, idx) => (
-                      <InputOTPSlot key={idx} {...slot} index={idx} />
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <InputOTPSlot key={i} {...slots?.[i]} />
                     ))}
                   </InputOTPGroup>
                 )}
