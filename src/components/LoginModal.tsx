@@ -58,8 +58,8 @@ export const LoginModal = () => {
         await login(email, password);
         setIsOpen(false);
       }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong. Please try again.");
     }
   };
 
@@ -68,8 +68,8 @@ export const LoginModal = () => {
       await sendOTP(phone);
       startResendTimer();
       toast.success("OTP resent successfully!");
-    } catch (error) {
-      toast.error("Failed to resend OTP. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to resend OTP. Please try again.");
     }
   };
 
@@ -82,8 +82,8 @@ export const LoginModal = () => {
         setIsVerifying(false);
         toast.success("Phone number verified successfully!");
       }
-    } catch (error) {
-      toast.error("Invalid OTP. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Invalid OTP. Please try again.");
     }
   };
 
@@ -113,8 +113,8 @@ export const LoginModal = () => {
                 maxLength={6}
                 render={({ slots }) => (
                   <InputOTPGroup>
-                    {slots.map((slot, index) => (
-                      <InputOTPSlot key={index} {...slot} />
+                    {slots.map((slot, idx) => (
+                      <InputOTPSlot key={idx} {...slot} index={idx} />
                     ))}
                   </InputOTPGroup>
                 )}

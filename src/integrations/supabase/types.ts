@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          appointment_date: string
+          created_at: string | null
+          doctor_id: string
+          hospital_id: string
+          id: string
+          patient_id: string | null
+          payment_amount: number
+          payment_status: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          scheduled_time: string
+          status: string | null
+          token_number: number
+        }
+        Insert: {
+          appointment_date: string
+          created_at?: string | null
+          doctor_id: string
+          hospital_id: string
+          id?: string
+          patient_id?: string | null
+          payment_amount: number
+          payment_status?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          scheduled_time: string
+          status?: string | null
+          token_number: number
+        }
+        Update: {
+          appointment_date?: string
+          created_at?: string | null
+          doctor_id?: string
+          hospital_id?: string
+          id?: string
+          patient_id?: string | null
+          payment_amount?: number
+          payment_status?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          scheduled_time?: string
+          status?: string | null
+          token_number?: number
+        }
+        Relationships: []
+      }
       otp_attempts: {
         Row: {
           attempts: number | null
