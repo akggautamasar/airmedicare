@@ -45,30 +45,45 @@ export const LoginModal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log("Starting signup/login process...");
       if (isSignup) {
         if (!phone) {
           toast.error("Phone number is required");
           return;
         }
-        await signup(email, password, name, phone);
+
+        // Format phone number to ensure it starts with +
+        const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+        console.log("Attempting signup with phone:", formattedPhone);
+
+        await signup(email, password, name, formattedPhone);
+        console.log("Signup successful, sending OTP...");
         setIsVerifying(true);
-        await sendOTP(phone);
+        await sendOTP(formattedPhone);
+        console.log("OTP sent successfully");
         startResendTimer();
+        toast.success("OTP sent to your phone number!");
       } else {
+        console.log("Attempting login...");
         await login(email, password);
         setIsOpen(false);
+        toast.success("Logged in successfully!");
       }
     } catch (error: any) {
+      console.error("Error during signup/login:", error);
       toast.error(error.message || "Something went wrong. Please try again.");
     }
   };
 
   const handleResendOTP = async () => {
     try {
-      await sendOTP(phone);
+      console.log("Attempting to resend OTP...");
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      await sendOTP(formattedPhone);
       startResendTimer();
       toast.success("OTP resent successfully!");
     } catch (error: any) {
+      console.error("Error resending OTP:", error);
       toast.error(error.message || "Failed to resend OTP. Please try again.");
     }
   };
@@ -76,13 +91,17 @@ export const LoginModal = () => {
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const verified = await verifyOTP(phone, otp);
+      console.log("Attempting to verify OTP...");
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      const verified = await verifyOTP(formattedPhone, otp);
       if (verified) {
+        console.log("OTP verified successfully");
         setIsOpen(false);
         setIsVerifying(false);
         toast.success("Phone number verified successfully!");
       }
     } catch (error: any) {
+      console.error("Error verifying OTP:", error);
       toast.error(error.message || "Invalid OTP. Please try again.");
     }
   };

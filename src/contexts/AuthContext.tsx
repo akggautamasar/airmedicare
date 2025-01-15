@@ -56,9 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (email: string, password: string, name: string, phone: string) => {
     try {
+      console.log("Starting signup process...");
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      console.log("Formatted phone number:", formattedPhone);
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         phone: formattedPhone,
@@ -70,9 +72,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error);
+        throw error;
+      }
+
+      console.log("Signup response:", data);
       toast.success('Account created successfully! Please verify your phone number.');
     } catch (error) {
+      console.error("Signup process error:", error);
       if (error instanceof AuthApiError) {
         toast.error(error.message);
       } else {
@@ -119,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendOTP = async (phone: string) => {
     try {
+      console.log("Sending OTP to:", phone);
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
       
       // Track OTP attempts
@@ -127,6 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select('attempts, last_attempt')
         .eq('phone', formattedPhone)
         .single();
+
+      console.log("Current OTP attempts:", attempts);
 
       if (!fetchError && attempts) {
         const lastAttempt = new Date(attempts.last_attempt);
@@ -158,9 +169,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone: formattedPhone,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("OTP send error:", error);
+        throw error;
+      }
+
+      console.log("OTP sent successfully");
       toast.success('OTP sent successfully!');
     } catch (error) {
+      console.error("Send OTP error:", error);
       if (error instanceof AuthApiError) {
         toast.error(error.message);
       } else if (error instanceof Error) {
@@ -217,4 +234,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
