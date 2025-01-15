@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 export const LoginModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +23,24 @@ export const LoginModal = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const { login, signup, sendOTP, verifyOTP } = useAuth();
+
+  const startResendTimer = () => {
+    setResendDisabled(true);
+    setResendTimer(30);
+    const timer = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setResendDisabled(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +53,23 @@ export const LoginModal = () => {
         await signup(email, password, name, phone);
         setIsVerifying(true);
         await sendOTP(phone);
+        startResendTimer();
       } else {
         await login(email, password);
         setIsOpen(false);
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      await sendOTP(phone);
+      startResendTimer();
+      toast.success("OTP resent successfully!");
+    } catch (error) {
+      toast.error("Failed to resend OTP. Please try again.");
     }
   };
 
@@ -51,6 +80,7 @@ export const LoginModal = () => {
       if (verified) {
         setIsOpen(false);
         setIsVerifying(false);
+        toast.success("Phone number verified successfully!");
       }
     } catch (error) {
       toast.error("Invalid OTP. Please try again.");
@@ -76,17 +106,36 @@ export const LoginModal = () => {
         {isVerifying ? (
           <form onSubmit={handleVerifyOTP} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="otp">Enter OTP</Label>
-              <Input
-                id="otp"
+              <Label>Enter OTP</Label>
+              <InputOTP
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
+                onChange={(value) => setOtp(value)}
+                maxLength={6}
+                render={({ slots }) => (
+                  <InputOTPGroup>
+                    {slots.map((slot, index) => (
+                      <InputOTPSlot key={index} {...slot} />
+                    ))}
+                  </InputOTPGroup>
+                )}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Verify OTP
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={handleResendOTP}
+                disabled={resendDisabled}
+                className="w-full"
+              >
+                {resendDisabled 
+                  ? `Resend OTP in ${resendTimer}s` 
+                  : "Resend OTP"}
+              </Button>
+              <Button type="submit" className="w-full">
+                Verify OTP
+              </Button>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

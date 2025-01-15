@@ -24,7 +24,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser({
@@ -36,7 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -106,9 +104,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendOTP = async (phone: string) => {
     try {
+      // Track OTP attempts
+      const { data: attempts, error: fetchError } = await supabase
+        .from('otp_attempts')
+        .select('attempts, last_attempt')
+        .eq('phone', phone)
+        .single();
+
+      if (!fetchError && attempts) {
+        const lastAttempt = new Date(attempts.last_attempt);
+        const now = new Date();
+        const timeDiff = (now.getTime() - lastAttempt.getTime()) / 1000; // in seconds
+
+        if (attempts.attempts >= 3 && timeDiff < 300) { // 5 minutes cooldown
+          throw new Error('Too many attempts. Please try again in 5 minutes.');
+        }
+
+        // Update attempts count
+        await supabase
+          .from('otp_attempts')
+          .update({
+            attempts: attempts.attempts + 1,
+            last_attempt: new Date().toISOString(),
+          })
+          .eq('phone', phone);
+      } else {
+        // Create new attempt record
+        await supabase
+          .from('otp_attempts')
+          .insert({
+            phone,
+            attempts: 1,
+            user_id: user?.id,
+          });
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         phone,
       });
+      
       if (error) throw error;
       toast.success('OTP sent successfully!');
     } catch (error) {
@@ -124,7 +158,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token: otp,
         type: 'sms',
       });
+
       if (error) throw error;
+
+      // Reset attempts on successful verification
+      await supabase
+        .from('otp_attempts')
+        .update({
+          attempts: 0,
+          last_attempt: new Date().toISOString(),
+        })
+        .eq('phone', phone);
+
       toast.success('Phone number verified successfully!');
       return true;
     } catch (error) {
@@ -147,4 +192,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
