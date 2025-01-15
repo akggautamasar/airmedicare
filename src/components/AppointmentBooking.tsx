@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { initializeRazorpay, processPayment, createRazorpayOrder } from "@/lib/razorpay";
 
 interface AppointmentBookingProps {
