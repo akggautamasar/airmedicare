@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Menu, X, Heart, Hospital } from "lucide-react";
-import { LoginModal } from "./LoginModal";
-import { useAuth } from "@/contexts/AuthContext";
+import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { NavbarDesktopMenu } from "./NavbarDesktopMenu";
+import { NavbarMobileMenu } from "./NavbarMobileMenu";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,39 +23,12 @@ export const Navbar = () => {
             </div>
           </div>
 
-          {/* Desktop menu */}
-          <div className="hidden sm:flex sm:items-center sm:space-x-4">
-            <Button variant="ghost">
-              <Heart className="h-4 w-4 mr-2" />
-              Quick Health Tips
-            </Button>
-            <Button variant="ghost">
-              <Hospital className="h-4 w-4 mr-2" />
-              Find Healthcare Facilities
-            </Button>
-            <Button variant="ghost">Find Doctors</Button>
-            <Button variant="ghost">Book Appointment</Button>
-            <Link to="/buy-medicine">
-              <Button variant="ghost">Buy Medicines</Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-            >
-              <Globe className="h-4 w-4" />
-            </Button>
-            {user ? (
-              <>
-                <span className="text-gray-600">Hello, {user.name || user.email}</span>
-                <Button variant="outline" onClick={logout}>
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <LoginModal />
-            )}
-          </div>
+          <NavbarDesktopMenu
+            language={language}
+            setLanguage={setLanguage}
+            user={user}
+            logout={logout}
+          />
 
           {/* Mobile menu button */}
           <div className="flex items-center sm:hidden">
@@ -65,56 +39,13 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            <Button variant="ghost" className="w-full justify-start">
-              <Heart className="h-4 w-4 mr-2" />
-              Quick Health Tips
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <Hospital className="h-4 w-4 mr-2" />
-              Find Healthcare Facilities
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Find Doctors
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Book Appointment
-            </Button>
-            <Link to="/buy-medicine">
-              <Button variant="ghost" className="w-full justify-start">
-                Buy Medicines
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-            >
-              <Globe className="h-4 w-4 mr-2" />
-              {language === "en" ? "हिंदी" : "English"}
-            </Button>
-            {user ? (
-              <>
-                <span className="block px-4 py-2 text-gray-600">
-                  Hello, {user.name || user.email}
-                </span>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={logout}
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <LoginModal />
-            )}
-          </div>
-        </div>
-      )}
+      <NavbarMobileMenu
+        isOpen={isOpen}
+        language={language}
+        setLanguage={setLanguage}
+        user={user}
+        logout={logout}
+      />
     </nav>
   );
 };
