@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Menu, X } from "lucide-react";
+import { Globe, Menu, X, Heart, Hospital } from "lucide-react";
 import { LoginModal } from "./LoginModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
@@ -24,6 +24,14 @@ export const Navbar = () => {
 
           {/* Desktop menu */}
           <div className="hidden sm:flex sm:items-center sm:space-x-4">
+            <Button variant="ghost">
+              <Heart className="h-4 w-4 mr-2" />
+              Quick Health Tips
+            </Button>
+            <Button variant="ghost">
+              <Hospital className="h-4 w-4 mr-2" />
+              Find Healthcare Facilities
+            </Button>
             <Button variant="ghost">Find Doctors</Button>
             <Button variant="ghost">Book Appointment</Button>
             <Link to="/buy-medicine">
@@ -61,6 +69,14 @@ export const Navbar = () => {
       {isOpen && (
         <div className="sm:hidden">
           <div className="pt-2 pb-3 space-y-1">
+            <Button variant="ghost" className="w-full justify-start">
+              <Heart className="h-4 w-4 mr-2" />
+              Quick Health Tips
+            </Button>
+            <Button variant="ghost" className="w-full justify-start">
+              <Hospital className="h-4 w-4 mr-2" />
+              Find Healthcare Facilities
+            </Button>
             <Button variant="ghost" className="w-full justify-start">
               Find Doctors
             </Button>
