@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavbarDesktopMenu } from "./NavbarDesktopMenu";
 import { NavbarMobileMenu } from "./NavbarMobileMenu";
+import { User } from "@supabase/supabase-js";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +27,7 @@ export const Navbar = () => {
           <NavbarDesktopMenu
             language={language}
             setLanguage={setLanguage}
-            user={user}
+            user={user as User}
             logout={logout}
           />
 
@@ -43,7 +44,7 @@ export const Navbar = () => {
         isOpen={isOpen}
         language={language}
         setLanguage={setLanguage}
-        user={user}
+        user={user as User}
         logout={logout}
       />
     </nav>

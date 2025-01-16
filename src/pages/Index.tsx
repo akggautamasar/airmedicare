@@ -2,8 +2,6 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { LocationSearch } from "@/components/LocationSearch";
-import { HospitalSearch } from "@/components/HospitalSearch";
-import { HealthRecords } from "@/components/HealthRecords";
 import { YouTubeVideos } from "@/components/YouTubeVideos";
 
 const Index = () => {
@@ -13,9 +11,7 @@ const Index = () => {
       <Hero />
       <LocationSearch />
       <Features />
-      <HospitalSearch />
       <YouTubeVideos />
-      <HealthRecords />
     </div>
   );
 };
