@@ -4,6 +4,7 @@ import { Features } from "@/components/Features";
 import { LocationSearch } from "@/components/LocationSearch";
 import { HospitalSearch } from "@/components/HospitalSearch";
 import { HealthRecords } from "@/components/HealthRecords";
+import { YouTubeVideos } from "@/components/YouTubeVideos";
 
 const Index = () => {
   return (
@@ -13,6 +14,7 @@ const Index = () => {
       <LocationSearch />
       <Features />
       <HospitalSearch />
+      <YouTubeVideos />
       <HealthRecords />
     </div>
   );
