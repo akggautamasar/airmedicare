@@ -55,9 +55,11 @@ export const LoginModal = () => {
         setIsVerifying(true);
         await sendOTP(formattedPhone);
         startResendTimer();
+        toast.success("OTP sent to your phone number");
       } else {
         await login(email, password);
         setIsOpen(false);
+        toast.success("Logged in successfully");
       }
     } catch (error: any) {
       console.error("Auth error:", error);
@@ -70,6 +72,7 @@ export const LoginModal = () => {
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
       await sendOTP(formattedPhone);
       startResendTimer();
+      toast.success("OTP resent successfully");
     } catch (error: any) {
       console.error("Resend OTP error:", error);
       toast.error(error.message || "Failed to resend OTP. Please try again.");
@@ -84,6 +87,7 @@ export const LoginModal = () => {
       if (verified) {
         setIsOpen(false);
         setIsVerifying(false);
+        toast.success("Phone number verified successfully!");
       }
     } catch (error: any) {
       console.error("Verify OTP error:", error);

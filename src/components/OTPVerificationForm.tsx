@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 
 interface OTPVerificationFormProps {
   otp: string;
@@ -32,7 +31,7 @@ export const OTPVerificationForm = ({
           render={({ slots }) => (
             <InputOTPGroup>
               {slots.map((slot, index) => (
-                <InputOTPSlot key={index} {...slot} index={index} />
+                <InputOTPSlot key={index} {...slot} />
               ))}
             </InputOTPGroup>
           )}
