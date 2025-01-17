@@ -51,7 +51,19 @@ export const LoginModal = () => {
         }
 
         const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-        await signup(email, password, name, formattedPhone);
+        const { error, needsEmailVerification } = await signup(email, password, name, formattedPhone);
+        
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        if (needsEmailVerification) {
+          toast.success("Please check your email for verification link before proceeding");
+          setIsOpen(false);
+          return;
+        }
+
         setIsVerifying(true);
         await sendOTP(formattedPhone);
         startResendTimer();
@@ -107,7 +119,7 @@ export const LoginModal = () => {
             {isVerifying
               ? "Enter the OTP sent to your phone"
               : isSignup
-              ? "Sign up to access all features"
+              ? "Sign up to access all features. You'll need to verify your email."
               : "Login to your account to continue"}
           </DialogDescription>
         </DialogHeader>

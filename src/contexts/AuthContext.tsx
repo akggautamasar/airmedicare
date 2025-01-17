@@ -13,7 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, phone: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, phone: string) => Promise<{ error?: AuthError; needsEmailVerification?: boolean }>;
   logout: () => Promise<void>;
   sendOTP: (phone: string) => Promise<void>;
   verifyOTP: (phone: string, otp: string) => Promise<boolean>;
@@ -76,25 +76,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error("Signup error:", error);
-        toast.error(error.message);
-        throw error;
+        return { error };
       }
 
       if (data?.user) {
         console.log("Signup successful:", data);
-        toast.success('Account created successfully! Please verify your phone number.');
-        return;
+        // Check if email confirmation is needed
+        if (data.session === null) {
+          return { needsEmailVerification: true };
+        }
+        return {};
       }
 
-      toast.error('Something went wrong during signup. Please try again.');
+      return { error: new Error('Something went wrong during signup') as AuthError };
     } catch (error) {
       console.error("Signup process error:", error);
       if (error instanceof AuthApiError) {
-        toast.error(error.message);
-      } else {
-        toast.error('An unexpected error occurred. Please try again.');
+        return { error };
       }
-      throw error;
+      return { error: new Error('An unexpected error occurred') as AuthError };
     }
   };
 
