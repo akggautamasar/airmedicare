@@ -52,9 +52,9 @@ export const NavbarMobileMenu = ({
           {language === "en" ? "हिंदी" : "English"}
         </Button>
         {user ? (
-          <>
-            <span className="block px-4 py-2 text-gray-600">
-              Hello, {user.email}
+          <div className="space-y-2">
+            <span className="block px-4 py-2 text-sm text-gray-600">
+              Hello, {user.email?.split('@')[0]}
             </span>
             <Button
               variant="outline"
@@ -63,7 +63,7 @@ export const NavbarMobileMenu = ({
             >
               Logout
             </Button>
-          </>
+          </div>
         ) : (
           <LoginModal />
         )}

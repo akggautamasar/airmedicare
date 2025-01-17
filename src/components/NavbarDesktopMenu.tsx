@@ -40,12 +40,14 @@ export const NavbarDesktopMenu = ({
         <Globe className="h-4 w-4" />
       </Button>
       {user ? (
-        <>
-          <span className="text-gray-600">Hello, {user.email}</span>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-600">
+            Hello, {user.email?.split('@')[0]}
+          </span>
           <Button variant="outline" onClick={logout}>
             Logout
           </Button>
-        </>
+        </div>
       ) : (
         <LoginModal />
       )}
