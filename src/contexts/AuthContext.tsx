@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session);
       if (session) {
         setUser({
           id: session.user.id,
@@ -69,16 +70,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name,
             phone: formattedPhone,
           },
+          emailRedirectTo: window.location.origin,
         },
       });
 
       if (error) {
         console.error("Signup error:", error);
+        toast.error(error.message);
         throw error;
       }
 
-      console.log("Signup response:", data);
-      toast.success('Account created successfully! Please verify your phone number.');
+      if (data?.user) {
+        console.log("Signup successful:", data);
+        toast.success('Account created successfully! Please verify your phone number.');
+        return;
+      }
+
+      toast.error('Something went wrong during signup. Please try again.');
     } catch (error) {
       console.error("Signup process error:", error);
       if (error instanceof AuthApiError) {
@@ -92,13 +100,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-      toast.success('Logged in successfully!');
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      }
+
+      if (data?.user) {
+        toast.success('Logged in successfully!');
+      }
     } catch (error) {
       if (error instanceof AuthApiError) {
         toast.error(error.message);
@@ -130,7 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Sending OTP to:", phone);
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
       
-      // Track OTP attempts
       const { data: attempts, error: fetchError } = await supabase
         .from('otp_attempts')
         .select('attempts, last_attempt')
@@ -171,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error("OTP send error:", error);
+        toast.error(error.message);
         throw error;
       }
 
@@ -199,7 +213,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         type: 'sms',
       });
 
-      if (error) throw error;
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      }
 
       await supabase
         .from('otp_attempts')
@@ -234,4 +251,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};
