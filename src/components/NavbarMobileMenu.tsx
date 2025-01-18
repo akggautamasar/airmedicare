@@ -24,20 +24,28 @@ export const NavbarMobileMenu = ({
   return (
     <div className="sm:hidden">
       <div className="pt-2 pb-3 space-y-1">
-        <Button variant="ghost" className="w-full justify-start">
-          <Heart className="h-4 w-4 mr-2" />
-          Quick Health Tips
-        </Button>
-        <Button variant="ghost" className="w-full justify-start">
-          <Hospital className="h-4 w-4 mr-2" />
-          Find Healthcare Facilities
-        </Button>
-        <Button variant="ghost" className="w-full justify-start">
-          Find Doctors
-        </Button>
-        <Button variant="ghost" className="w-full justify-start">
-          Book Appointment
-        </Button>
+        <Link to="/health-tips" className="block w-full">
+          <Button variant="ghost" className="w-full justify-start">
+            <Heart className="h-4 w-4 mr-2" />
+            Quick Health Tips
+          </Button>
+        </Link>
+        <Link to="/find-facilities" className="block w-full">
+          <Button variant="ghost" className="w-full justify-start">
+            <Hospital className="h-4 w-4 mr-2" />
+            Find Healthcare Facilities
+          </Button>
+        </Link>
+        <Link to="/find-doctors" className="block w-full">
+          <Button variant="ghost" className="w-full justify-start">
+            Find Doctors
+          </Button>
+        </Link>
+        <Link to="/book-appointment" className="block w-full">
+          <Button variant="ghost" className="w-full justify-start">
+            Book Appointment
+          </Button>
+        </Link>
         <Link to="/buy-medicine" className="block w-full">
           <Button variant="ghost" className="w-full justify-start">
             Buy Medicines

@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import BuyMedicine from "./pages/BuyMedicine";
+import HealthTips from "./pages/HealthTips";
+import FindFacilities from "./pages/FindFacilities";
+import FindDoctors from "./pages/FindDoctors";
+import BookAppointment from "./pages/BookAppointment";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +23,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/buy-medicine" element={<BuyMedicine />} />
+            <Route path="/health-tips" element={<HealthTips />} />
+            <Route path="/find-facilities" element={<FindFacilities />} />
+            <Route path="/find-doctors" element={<FindDoctors />} />
+            <Route path="/book-appointment" element={<BookAppointment />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

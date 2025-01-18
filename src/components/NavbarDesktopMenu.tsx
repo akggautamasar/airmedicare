@@ -19,16 +19,24 @@ export const NavbarDesktopMenu = ({
 }: NavbarDesktopMenuProps) => {
   return (
     <div className="hidden sm:flex sm:items-center sm:space-x-4">
-      <Button variant="ghost">
-        <Heart className="h-4 w-4 mr-2" />
-        Quick Health Tips
-      </Button>
-      <Button variant="ghost">
-        <Hospital className="h-4 w-4 mr-2" />
-        Find Healthcare Facilities
-      </Button>
-      <Button variant="ghost">Find Doctors</Button>
-      <Button variant="ghost">Book Appointment</Button>
+      <Link to="/health-tips">
+        <Button variant="ghost">
+          <Heart className="h-4 w-4 mr-2" />
+          Quick Health Tips
+        </Button>
+      </Link>
+      <Link to="/find-facilities">
+        <Button variant="ghost">
+          <Hospital className="h-4 w-4 mr-2" />
+          Find Healthcare Facilities
+        </Button>
+      </Link>
+      <Link to="/find-doctors">
+        <Button variant="ghost">Find Doctors</Button>
+      </Link>
+      <Link to="/book-appointment">
+        <Button variant="ghost">Book Appointment</Button>
+      </Link>
       <Link to="/buy-medicine">
         <Button variant="ghost">Buy Medicines</Button>
       </Link>
