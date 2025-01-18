@@ -3,10 +3,17 @@ import { Globe, Heart, Hospital } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoginModal } from "./LoginModal";
 import { User } from "@supabase/supabase-js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { languages, LanguageCode } from "@/utils/languages";
 
 interface NavbarDesktopMenuProps {
-  language: "en" | "hi";
-  setLanguage: (lang: "en" | "hi") => void;
+  language: LanguageCode;
+  setLanguage: (lang: LanguageCode) => void;
   user: User | null;
   logout: () => void;
 }
@@ -40,17 +47,33 @@ export const NavbarDesktopMenu = ({
       <Link to="/buy-medicine">
         <Button variant="ghost">Buy Medicines</Button>
       </Link>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-      >
-        <Globe className="h-4 w-4" />
-      </Button>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <Globe className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {languages.map((lang) => (
+            <DropdownMenuItem
+              key={lang.code}
+              onClick={() => setLanguage(lang.code)}
+              className={`flex justify-between ${
+                language === lang.code ? "bg-accent" : ""
+              }`}
+            >
+              <span>{lang.name}</span>
+              <span className="text-muted-foreground">{lang.nativeName}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       {user ? (
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600">
-            Hello, {user.user_metadata?.name || user.email?.split('@')[0]}
+            Hello, {user.user_metadata?.name || user.email?.split("@")[0]}
           </span>
           <Button variant="outline" onClick={logout}>
             Logout

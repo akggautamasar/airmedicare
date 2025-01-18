@@ -6,10 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NavbarDesktopMenu } from "./NavbarDesktopMenu";
 import { NavbarMobileMenu } from "./NavbarMobileMenu";
 import { User } from "@supabase/supabase-js";
+import { LanguageCode } from "@/utils/languages";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [language, setLanguage] = useState<LanguageCode>("en");
   const { user, logout } = useAuth();
 
   return (
@@ -31,7 +32,6 @@ export const Navbar = () => {
             logout={logout}
           />
 
-          {/* Mobile menu button */}
           <div className="flex items-center sm:hidden">
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

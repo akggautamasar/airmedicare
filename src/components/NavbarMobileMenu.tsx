@@ -3,11 +3,12 @@ import { Globe, Heart, Hospital } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoginModal } from "./LoginModal";
 import { User } from "@supabase/supabase-js";
+import { languages, LanguageCode } from "@/utils/languages";
 
 interface NavbarMobileMenuProps {
   isOpen: boolean;
-  language: "en" | "hi";
-  setLanguage: (lang: "en" | "hi") => void;
+  language: LanguageCode;
+  setLanguage: (lang: LanguageCode) => void;
   user: User | null;
   logout: () => void;
 }
@@ -51,18 +52,29 @@ export const NavbarMobileMenu = ({
             Buy Medicines
           </Button>
         </Link>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-        >
-          <Globe className="h-4 w-4 mr-2" />
-          {language === "en" ? "हिंदी" : "English"}
-        </Button>
+
+        <div className="px-4 py-2 space-y-2">
+          <div className="text-sm font-medium text-gray-500">Select Language</div>
+          <div className="grid grid-cols-2 gap-2">
+            {languages.map((lang) => (
+              <Button
+                key={lang.code}
+                variant={language === lang.code ? "default" : "outline"}
+                size="sm"
+                className="justify-between"
+                onClick={() => setLanguage(lang.code)}
+              >
+                <span className="mr-2">{lang.name}</span>
+                <span className="text-xs">{lang.nativeName}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {user ? (
           <div className="space-y-2">
             <span className="block px-4 py-2 text-sm text-gray-600">
-              Hello, {user.user_metadata?.name || user.email?.split('@')[0]}
+              Hello, {user.user_metadata?.name || user.email?.split("@")[0]}
             </span>
             <Button
               variant="outline"
