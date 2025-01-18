@@ -34,7 +34,7 @@ export const AuthForm = ({
       {isSignup && (
         <>
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Full Name</Label>
             <Input
               id="name"
               value={name}

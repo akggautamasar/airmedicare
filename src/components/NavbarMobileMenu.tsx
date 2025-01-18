@@ -54,7 +54,7 @@ export const NavbarMobileMenu = ({
         {user ? (
           <div className="space-y-2">
             <span className="block px-4 py-2 text-sm text-gray-600">
-              Hello, {user.email?.split('@')[0]}
+              Hello, {user.user_metadata?.name || user.email?.split('@')[0]}
             </span>
             <Button
               variant="outline"

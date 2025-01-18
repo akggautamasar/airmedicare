@@ -42,7 +42,7 @@ export const NavbarDesktopMenu = ({
       {user ? (
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600">
-            Hello, {user.email?.split('@')[0]}
+            Hello, {user.user_metadata?.name || user.email?.split('@')[0]}
           </span>
           <Button variant="outline" onClick={logout}>
             Logout
