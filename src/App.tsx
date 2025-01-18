@@ -10,6 +10,8 @@ import HealthTips from "./pages/HealthTips";
 import FindFacilities from "./pages/FindFacilities";
 import FindDoctors from "./pages/FindDoctors";
 import BookAppointment from "./pages/BookAppointment";
+import MedicalLoan from "./pages/MedicalLoan";
+import LoanStatus from "./pages/LoanStatus";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/find-facilities" element={<FindFacilities />} />
             <Route path="/find-doctors" element={<FindDoctors />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
+            <Route path="/medical-loan" element={<MedicalLoan />} />
+            <Route path="/loan-status" element={<LoanStatus />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

@@ -57,6 +57,62 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_loans: {
+        Row: {
+          appointment_id: string | null
+          created_at: string | null
+          employment_status: string
+          id: string
+          interest_rate: number | null
+          lender_name: string | null
+          loan_amount: number
+          loan_purpose: string
+          loan_status: string | null
+          monthly_income: number
+          patient_id: string | null
+          tenure_months: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string | null
+          employment_status: string
+          id?: string
+          interest_rate?: number | null
+          lender_name?: string | null
+          loan_amount: number
+          loan_purpose: string
+          loan_status?: string | null
+          monthly_income: number
+          patient_id?: string | null
+          tenure_months?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string | null
+          employment_status?: string
+          id?: string
+          interest_rate?: number | null
+          lender_name?: string | null
+          loan_amount?: number
+          loan_purpose?: string
+          loan_status?: string | null
+          monthly_income?: number
+          patient_id?: string | null
+          tenure_months?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_loans_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       otp_attempts: {
         Row: {
           attempts: number | null
