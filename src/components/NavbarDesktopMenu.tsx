@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Globe, Heart, Hospital } from "lucide-react";
+import { Globe, Heart, Hospital, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoginModal } from "./LoginModal";
 import { User } from "@supabase/supabase-js";
@@ -46,6 +46,12 @@ export const NavbarDesktopMenu = ({
       </Link>
       <Link to="/buy-medicine">
         <Button variant="ghost">Buy Medicines</Button>
+      </Link>
+      <Link to="/medical-loan">
+        <Button variant="ghost">
+          <Coins className="h-4 w-4 mr-2" />
+          Medical Loan
+        </Button>
       </Link>
       
       <DropdownMenu>
