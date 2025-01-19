@@ -8,19 +8,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { initializeRazorpay, processPayment, createRazorpayOrder } from "@/lib/razorpay";
+import { calculateAppointmentTime, validateAppointmentDate } from "@/lib/appointmentUtils";
+import { AppointmentForm } from "./AppointmentForm";
 
 interface AppointmentBookingProps {
   doctorId: string;
@@ -42,15 +35,6 @@ export const AppointmentBooking = ({
   const [paymentType, setPaymentType] = React.useState<"full" | "partial">("full");
   const { user } = useAuth();
 
-  const calculateAppointmentTime = (tokenNumber: number) => {
-    const baseTime = new Date();
-    baseTime.setHours(10, 0, 0, 0); // Start time: 10:00 AM
-    const minutesPerPatient = 15; // 15 minutes per patient
-    const additionalMinutes = (tokenNumber - 1) * minutesPerPatient;
-    baseTime.setMinutes(baseTime.getMinutes() + additionalMinutes);
-    return baseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   const handleBookAppointment = async () => {
     try {
       if (!user) {
@@ -63,23 +47,17 @@ export const AppointmentBooking = ({
         return;
       }
 
-      // Validate selected date is not in the past
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selectedDateObj = new Date(selectedDate);
-      if (selectedDateObj < today) {
+      if (!validateAppointmentDate(selectedDate)) {
         toast.error("Please select a future date");
         return;
       }
 
-      // Initialize Razorpay
       const res = await initializeRazorpay();
       if (!res) {
         toast.error("Razorpay SDK failed to load");
         return;
       }
 
-      // Get the latest token number for the selected date
       const { data: existingAppointments, error: fetchError } = await supabase
         .from('appointments')
         .select('token_number')
@@ -103,17 +81,15 @@ export const AppointmentBooking = ({
         ? Math.round(consultationFee * 0.1) 
         : consultationFee;
 
-      // Create Razorpay order
       const order = await createRazorpayOrder(paymentAmount);
       if (!order) {
         toast.error("Failed to create payment order");
         return;
       }
-      
-      // Process payment with user details
+
       const userName = user.user_metadata?.full_name || user.name || user.email?.split('@')[0] || '';
       const userPhone = user.user_metadata?.phone || user.phone || '';
-      
+
       const paymentResponse = await processPayment({
         amount: paymentAmount,
         orderId: order.id,
@@ -129,7 +105,6 @@ export const AppointmentBooking = ({
         return;
       }
 
-      // Create appointment record
       const { error: insertError } = await supabase
         .from('appointments')
         .insert([
@@ -174,38 +149,16 @@ export const AppointmentBooking = ({
             Book an appointment with Dr. {doctorName} at {hospitalName}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Select Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="payment">Payment Type</Label>
-            <Select
-              value={paymentType}
-              onValueChange={(value: "full" | "partial") => setPaymentType(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="full">Full Payment (₹{consultationFee})</SelectItem>
-                <SelectItem value="partial">
-                  Partial Payment (₹{Math.round(consultationFee * 0.1)})
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={handleBookAppointment} className="w-full">
-            Confirm Booking
-          </Button>
-        </div>
+        <AppointmentForm
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          paymentType={paymentType}
+          setPaymentType={setPaymentType}
+          consultationFee={consultationFee}
+        />
+        <Button onClick={handleBookAppointment} className="w-full">
+          Confirm Booking
+        </Button>
       </DialogContent>
     </Dialog>
   );
