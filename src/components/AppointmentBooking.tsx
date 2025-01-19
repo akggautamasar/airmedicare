@@ -45,7 +45,7 @@ export const AppointmentBooking = ({
   const calculateAppointmentTime = (tokenNumber: number) => {
     const baseTime = new Date();
     baseTime.setHours(10, 0, 0, 0); // Start time: 10:00 AM
-    const minutesPerPatient = 15; // Increased from 5 to 15 minutes per patient
+    const minutesPerPatient = 15; // 15 minutes per patient
     const additionalMinutes = (tokenNumber - 1) * minutesPerPatient;
     baseTime.setMinutes(baseTime.getMinutes() + additionalMinutes);
     return baseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -110,14 +110,17 @@ export const AppointmentBooking = ({
         return;
       }
       
-      // Process payment
+      // Process payment with user details
+      const userName = user.user_metadata?.full_name || user.name || user.email?.split('@')[0] || '';
+      const userPhone = user.user_metadata?.phone || user.phone || '';
+      
       const paymentResponse = await processPayment({
         amount: paymentAmount,
         orderId: order.id,
         prefill: {
-          name: user.user_metadata?.full_name || user.email,
+          name: userName,
           email: user.email,
-          contact: user.phone || '',
+          contact: userPhone,
         },
       });
 

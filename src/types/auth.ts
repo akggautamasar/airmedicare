@@ -5,6 +5,11 @@ export interface User {
   email: string;
   phone?: string;
   name?: string;
+  user_metadata?: {
+    full_name?: string;
+    phone?: string;
+    [key: string]: any;
+  };
 }
 
 export interface AuthContextType {
