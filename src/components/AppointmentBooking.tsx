@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,15 +37,15 @@ export const AppointmentBooking = ({
   hospitalName,
   consultationFee,
 }: AppointmentBookingProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [paymentType, setPaymentType] = useState<"full" | "partial">("full");
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [selectedDate, setSelectedDate] = React.useState("");
+  const [paymentType, setPaymentType] = React.useState<"full" | "partial">("full");
   const { user } = useAuth();
 
   const calculateAppointmentTime = (tokenNumber: number) => {
     const baseTime = new Date();
     baseTime.setHours(10, 0, 0, 0); // Start time: 10:00 AM
-    const minutesPerPatient = 5;
+    const minutesPerPatient = 15; // Increased from 5 to 15 minutes per patient
     const additionalMinutes = (tokenNumber - 1) * minutesPerPatient;
     baseTime.setMinutes(baseTime.getMinutes() + additionalMinutes);
     return baseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -55,6 +55,20 @@ export const AppointmentBooking = ({
     try {
       if (!user) {
         toast.error("Please login to book an appointment");
+        return;
+      }
+
+      if (!selectedDate) {
+        toast.error("Please select an appointment date");
+        return;
+      }
+
+      // Validate selected date is not in the past
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDateObj = new Date(selectedDate);
+      if (selectedDateObj < today) {
+        toast.error("Please select a future date");
         return;
       }
 
@@ -74,7 +88,11 @@ export const AppointmentBooking = ({
         .order('token_number', { ascending: false })
         .limit(1);
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching appointments:', fetchError);
+        toast.error("Failed to check available slots");
+        return;
+      }
 
       const tokenNumber = existingAppointments && existingAppointments.length > 0
         ? existingAppointments[0].token_number + 1
@@ -82,22 +100,31 @@ export const AppointmentBooking = ({
 
       const scheduledTime = calculateAppointmentTime(tokenNumber);
       const paymentAmount = paymentType === 'partial' 
-        ? consultationFee * 0.1 
+        ? Math.round(consultationFee * 0.1) 
         : consultationFee;
 
       // Create Razorpay order
       const order = await createRazorpayOrder(paymentAmount);
+      if (!order) {
+        toast.error("Failed to create payment order");
+        return;
+      }
       
       // Process payment
       const paymentResponse = await processPayment({
         amount: paymentAmount,
         orderId: order.id,
         prefill: {
-          name: user.name,
+          name: user.user_metadata?.full_name || user.email,
           email: user.email,
-          contact: user.phone,
+          contact: user.phone || '',
         },
       });
+
+      if (!paymentResponse) {
+        toast.error("Payment failed");
+        return;
+      }
 
       // Create appointment record
       const { error: insertError } = await supabase
@@ -118,20 +145,24 @@ export const AppointmentBooking = ({
           }
         ]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error creating appointment:', insertError);
+        toast.error("Failed to book appointment");
+        return;
+      }
 
       toast.success(`Appointment booked successfully! Your token number is ${tokenNumber}`);
       setIsOpen(false);
     } catch (error) {
+      console.error('Error in handleBookAppointment:', error);
       toast.error("Failed to book appointment. Please try again.");
-      console.error(error);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Book Appointment</Button>
+        <Button variant="outline">Book Appointment</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -163,7 +194,7 @@ export const AppointmentBooking = ({
               <SelectContent>
                 <SelectItem value="full">Full Payment (₹{consultationFee})</SelectItem>
                 <SelectItem value="partial">
-                  Partial Payment (₹{consultationFee * 0.1})
+                  Partial Payment (₹{Math.round(consultationFee * 0.1)})
                 </SelectItem>
               </SelectContent>
             </Select>
