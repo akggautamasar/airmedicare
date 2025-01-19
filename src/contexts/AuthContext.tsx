@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as React from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthError, AuthApiError } from '@supabase/supabase-js';
@@ -19,12 +19,12 @@ interface AuthContextType {
   verifyOTP: (phone: string, otp: string) => Promise<boolean>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = React.useState<User | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser({
@@ -81,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data?.user) {
         console.log("Signup successful:", data);
-        // Check if email confirmation is needed
         if (data.session === null) {
           return { needsEmailVerification: true };
         }
@@ -246,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
