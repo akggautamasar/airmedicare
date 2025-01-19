@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -49,6 +50,10 @@ const LoanStatus = () => {
 
     fetchLoans();
   }, [user]);
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   if (loading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
