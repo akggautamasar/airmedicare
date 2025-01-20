@@ -58,6 +58,11 @@ export const NavbarMobileMenu = ({
             Medical Loan
           </Button>
         </Link>
+        <Link to="/loan-status" className="block w-full">
+          <Button variant="outline" className="w-full justify-start">
+            Check Loan Status
+          </Button>
+        </Link>
 
         <div className="px-4 py-2 space-y-2">
           <div className="text-sm font-medium text-gray-500">Select Language</div>

@@ -47,30 +47,34 @@ export const NavbarDesktopMenu = ({
       <Link to="/buy-medicine">
         <Button variant="ghost">Buy Medicines</Button>
       </Link>
-      <Link to="/medical-loan">
-        <Button variant="ghost">
-          <Coins className="h-4 w-4 mr-2" />
-          Medical Loan
-        </Button>
-      </Link>
+      <div className="flex items-center space-x-2">
+        <Link to="/medical-loan">
+          <Button variant="ghost">
+            <Coins className="h-4 w-4 mr-2" />
+            Medical Loan
+          </Button>
+        </Link>
+        <Link to="/loan-status">
+          <Button variant="outline" size="sm">
+            Check Status
+          </Button>
+        </Link>
+      </div>
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Globe className="h-4 w-4" />
+          <Button variant="ghost" size="icon">
+            <Globe className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end">
           {languages.map((lang) => (
             <DropdownMenuItem
               key={lang.code}
               onClick={() => setLanguage(lang.code)}
-              className={`flex justify-between ${
-                language === lang.code ? "bg-accent" : ""
-              }`}
             >
-              <span>{lang.name}</span>
-              <span className="text-muted-foreground">{lang.nativeName}</span>
+              <span className="mr-2">{lang.name}</span>
+              <span className="text-xs text-gray-500">{lang.nativeName}</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
