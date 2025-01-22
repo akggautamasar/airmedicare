@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,10 @@ import { toast } from "sonner";
 
 interface HospitalFormProps {
   onSuccess: () => void;
+  initialData?: any;
 }
 
-export function HospitalForm({ onSuccess }: HospitalFormProps) {
+export function HospitalForm({ onSuccess, initialData }: HospitalFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,25 +34,57 @@ export function HospitalForm({ onSuccess }: HospitalFormProps) {
     services: [] as string[],
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || "",
+        type: initialData.type || "",
+        category: initialData.category || "",
+        district: initialData.district || "",
+        address: initialData.address || "",
+        contact: initialData.contact || "",
+        emergency: initialData.emergency || false,
+        services: initialData.services || [],
+      });
+    }
+  }, [initialData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("hospitals_data").insert([
-        {
-          ...formData,
-          created_by: user.id,
-        },
-      ]);
+      if (initialData) {
+        // Update existing hospital
+        const { error } = await supabase
+          .from("hospitals_data")
+          .update({
+            ...formData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", initialData.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast.success("Hospital added successfully");
+        toast.success("Hospital updated successfully");
+      } else {
+        // Add new hospital
+        const { error } = await supabase.from("hospitals_data").insert([
+          {
+            ...formData,
+            created_by: user.id,
+          },
+        ]);
+
+        if (error) throw error;
+
+        toast.success("Hospital added successfully");
+      }
+
       onSuccess();
     } catch (error: any) {
-      console.error("Error adding hospital:", error);
+      console.error("Error saving hospital:", error);
       toast.error(error.message);
     } finally {
       setLoading(false);
@@ -158,7 +191,7 @@ export function HospitalForm({ onSuccess }: HospitalFormProps) {
       </div>
 
       <Button type="submit" disabled={loading}>
-        {loading ? "Adding..." : "Add Hospital"}
+        {loading ? "Saving..." : initialData ? "Update Hospital" : "Add Hospital"}
       </Button>
     </form>
   );
