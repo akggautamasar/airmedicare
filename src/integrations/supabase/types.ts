@@ -57,6 +57,60 @@ export type Database = {
         }
         Relationships: []
       }
+      hospitals_data: {
+        Row: {
+          address: string
+          category: string | null
+          contact: string
+          created_at: string
+          created_by: string | null
+          district: string
+          doctors: Json[] | null
+          emergency: boolean | null
+          id: string
+          image: string | null
+          name: string
+          rating: number | null
+          services: string[] | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          category?: string | null
+          contact: string
+          created_at?: string
+          created_by?: string | null
+          district: string
+          doctors?: Json[] | null
+          emergency?: boolean | null
+          id?: string
+          image?: string | null
+          name: string
+          rating?: number | null
+          services?: string[] | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          category?: string | null
+          contact?: string
+          created_at?: string
+          created_by?: string | null
+          district?: string
+          doctors?: Json[] | null
+          emergency?: boolean | null
+          id?: string
+          image?: string | null
+          name?: string
+          rating?: number | null
+          services?: string[] | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medical_loans: {
         Row: {
           appointment_id: string | null
@@ -140,6 +194,24 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -148,7 +220,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -12,6 +12,7 @@ import FindDoctors from "./pages/FindDoctors";
 import BookAppointment from "./pages/BookAppointment";
 import MedicalLoan from "./pages/MedicalLoan";
 import LoanStatus from "./pages/LoanStatus";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/book-appointment" element={<BookAppointment />} />
             <Route path="/medical-loan" element={<MedicalLoan />} />
             <Route path="/loan-status" element={<LoanStatus />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
