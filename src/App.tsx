@@ -14,17 +14,55 @@ import MedicalLoan from "./pages/MedicalLoan";
 import LoanStatus from "./pages/LoanStatus";
 import AdminDashboard from "./pages/AdminDashboard";
 import { useAuth } from "./contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
 // Protected route component
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
-  
-  if (!user) {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+
+        setIsAdmin(profile?.role === "admin");
+      } catch (error: any) {
+        console.error("Error checking admin status:", error);
+        toast.error("Error checking admin status");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user || !isAdmin) {
+    toast.error("Unauthorized access");
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
