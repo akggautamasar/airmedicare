@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Globe, Heart, Hospital, Coins } from "lucide-react";
+import { Globe, Heart, Hospital, Coins, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoginModal } from "./LoginModal";
 import { User } from "@supabase/supabase-js";
 import { languages, LanguageCode } from "@/utils/languages";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavbarMobileMenuProps {
   isOpen: boolean;
@@ -20,6 +22,28 @@ export const NavbarMobileMenu = ({
   user,
   logout,
 }: NavbarMobileMenuProps) => {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        setIsAdmin(profile?.role === "admin");
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
+
   if (!isOpen) return null;
 
   return (
@@ -87,6 +111,14 @@ export const NavbarMobileMenu = ({
             <span className="block px-4 py-2 text-sm text-gray-600">
               Hello, {user.user_metadata?.name || user.email?.split("@")[0]}
             </span>
+            {isAdmin && (
+              <Link to="/admin" className="block w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin Dashboard
+                </Button>
+              </Link>
+            )}
             <Button
               variant="outline"
               className="w-full justify-start"
