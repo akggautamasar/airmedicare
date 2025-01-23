@@ -5,6 +5,7 @@ export interface User {
   email: string;
   phone?: string;
   name?: string;
+  role?: string;
   user_metadata?: {
     full_name?: string;
     phone?: string;

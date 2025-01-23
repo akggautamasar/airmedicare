@@ -12,36 +12,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const { sendOTP, verifyOTP } = useOTP();
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      return profile;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  };
+
+  const updateUserState = async (session: any) => {
+    if (session) {
+      const profile = await fetchUserProfile(session.user.id);
+      setUser({
+        id: session.user.id,
+        email: session.user.email!,
+        name: session.user.user_metadata.name,
+        phone: session.user.phone,
+        role: profile?.role || 'user'
+      });
+    } else {
+      setUser(null);
+    }
+  };
+
   React.useEffect(() => {
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: session.user.user_metadata.name,
-          phone: session.user.phone,
-        });
-      }
+      updateUserState(session);
     });
 
+    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
-      if (session) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: session.user.user_metadata.name,
-          phone: session.user.phone,
-        });
-      } else {
-        setUser(null);
-      }
+      updateUserState(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast.error(getErrorMessage(error));
+        throw error;
+      }
+
+      if (data?.user) {
+        const profile = await fetchUserProfile(data.user.id);
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          name: data.user.user_metadata.name,
+          phone: data.user.phone,
+          role: profile?.role || 'user'
+        });
+        toast.success("Logged in successfully!");
+      }
+    } catch (error) {
+      if (error instanceof AuthApiError) {
+        toast.error(getErrorMessage(error));
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+      throw error;
+    }
+  };
 
   const signup = async (email: string, password: string, name: string, phone: string) => {
     try {
@@ -82,31 +132,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
       return { error: new Error("An unexpected error occurred") as AuthError };
-    }
-  };
-
-  const login = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(getErrorMessage(error));
-        throw error;
-      }
-
-      if (data?.user) {
-        toast.success("Logged in successfully!");
-      }
-    } catch (error) {
-      if (error instanceof AuthApiError) {
-        toast.error(getErrorMessage(error));
-      } else {
-        toast.error("An unexpected error occurred. Please try again.");
-      }
-      throw error;
     }
   };
 
