@@ -29,15 +29,23 @@ export const NavbarMobileMenu = ({
       if (!user) return;
 
       try {
-        const { data: profile } = await supabase
+        console.log("Mobile menu - Checking admin status for user:", user.id);
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", user.id)
           .single();
 
+        if (error) {
+          console.error("Mobile menu - Error fetching profile:", error);
+          return;
+        }
+
+        console.log("Mobile menu - User profile:", profile);
         setIsAdmin(profile?.role === "admin");
+        console.log("Mobile menu - Is admin?", profile?.role === "admin");
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error("Mobile menu - Error checking admin status:", error);
       }
     };
 

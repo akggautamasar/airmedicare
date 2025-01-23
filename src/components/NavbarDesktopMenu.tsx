@@ -33,13 +33,21 @@ export const NavbarDesktopMenu = ({
       if (!user) return;
 
       try {
-        const { data: profile } = await supabase
+        console.log("Checking admin status for user:", user.id);
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", user.id)
           .single();
 
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
+
+        console.log("User profile:", profile);
         setIsAdmin(profile?.role === "admin");
+        console.log("Is admin?", profile?.role === "admin");
       } catch (error) {
         console.error("Error checking admin status:", error);
       }
