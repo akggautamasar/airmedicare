@@ -10,6 +10,9 @@ import { AppointmentsTab } from "@/components/admin/AppointmentsTab";
 import { LoansTab } from "@/components/admin/LoansTab";
 import { UsersTab } from "@/components/admin/UsersTab";
 import { HealthTipsTab } from "@/components/admin/HealthTipsTab";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -76,6 +79,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto p-8">
+      <div className="mb-6">
+        <Link to="/">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
+      
       <Tabs defaultValue="hospitals" className="space-y-6">
         <div className="flex justify-between items-center mb-8">
           <div>
