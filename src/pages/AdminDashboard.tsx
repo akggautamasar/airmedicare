@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +9,7 @@ import { HospitalsTab } from "@/components/admin/HospitalsTab";
 import { AppointmentsTab } from "@/components/admin/AppointmentsTab";
 import { LoansTab } from "@/components/admin/LoansTab";
 import { UsersTab } from "@/components/admin/UsersTab";
+import { HealthTipsTab } from "@/components/admin/HealthTipsTab";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -83,6 +85,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="appointments">Appointments</TabsTrigger>
               <TabsTrigger value="loans">Medical Loans</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="health-tips">Health Tips</TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -101,6 +104,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="users">
           <UsersTab />
+        </TabsContent>
+
+        <TabsContent value="health-tips">
+          <HealthTipsTab />
         </TabsContent>
       </Tabs>
     </div>

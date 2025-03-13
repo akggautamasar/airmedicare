@@ -57,6 +57,36 @@ export type Database = {
         }
         Relationships: []
       }
+      health_tips: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       hospitals_data: {
         Row: {
           address: string
