@@ -78,40 +78,21 @@ export function UsersTab() {
         return;
       }
 
-      // Find user by email through RPC or a custom approach
-      // Since we can't use .auth.admin.getUserByEmail on the client side
-      const { data: usersByEmail, error: emailLookupError } = await supabase
-        .from("profiles")
-        .select("id")
-        .filter("id", "in", (builder) => 
-          builder.from("auth.users").select("id").ilike("email", emailToPromote)
-        );
+      // Find user by email through RPC
+      const { data: userIdFromRPC, error: rpcError } = await supabase
+        .rpc("find_user_id_by_email", { email_input: emailToPromote });
 
-      if (emailLookupError) {
-        throw emailLookupError;
+      if (rpcError) {
+        throw rpcError;
       }
-
-      if (!usersByEmail || usersByEmail.length === 0) {
-        // Try an RPC if we have one (or create a stored procedure)
-        const { data: userIdFromRPC, error: rpcError } = await supabase
-          .rpc("find_user_id_by_email", { email_input: emailToPromote })
-          .single();
-
-        if (rpcError && rpcError.message !== "JSON object requested, multiple (or no) rows returned") {
-          throw rpcError;
-        }
-        
-        if (!userIdFromRPC) {
-          toast.error(`User not found with email: ${emailToPromote}`);
-          return;
-        }
-        
-        // If we found a user ID from RPC
-        await updateRoleOrCreateProfile(userIdFromRPC);
-      } else {
-        // If we found user(s) from the profiles query
-        await updateRoleOrCreateProfile(usersByEmail[0].id);
+      
+      if (!userIdFromRPC) {
+        toast.error(`User not found with email: ${emailToPromote}`);
+        return;
       }
+      
+      // If we found a user ID from RPC
+      await updateRoleOrCreateProfile(userIdFromRPC);
     } catch (error: any) {
       console.error("Error making admin by email:", error);
       toast.error(error.message);

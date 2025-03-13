@@ -247,7 +247,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_user_id_by_email: {
+        Args: {
+          email_input: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       user_role: "user" | "admin"
