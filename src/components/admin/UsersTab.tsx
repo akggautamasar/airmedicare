@@ -78,70 +78,90 @@ export function UsersTab() {
         return;
       }
 
-      // First get the user ID from the auth.users table
-      const { data: userData, error: userError } = await supabase.auth.admin
-        .getUserByEmail(emailToPromote)
-        .catch(() => {
-          // This fails in the client-side API, we'll handle it differently
-          return { data: null, error: new Error("Admin API not available client-side") };
-        });
+      // Find user by email through RPC or a custom approach
+      // Since we can't use .auth.admin.getUserByEmail on the client side
+      const { data: usersByEmail, error: emailLookupError } = await supabase
+        .from("profiles")
+        .select("id")
+        .filter("id", "in", (builder) => 
+          builder.from("auth.users").select("id").ilike("email", emailToPromote)
+        );
 
-      let userId;
-
-      if (userError) {
-        // If admin API fails, try to find the user from profiles table instead
-        // Note: This assumes emails are unique and the structure of your DB
-        const { data: usersByEmail, error: emailError } = await supabase
-          .rpc('find_user_id_by_email', { email_input: emailToPromote });
-
-        if (emailError) throw emailError;
-        if (!usersByEmail || usersByEmail.length === 0) {
-          toast.error("User not found with that email");
-          return;
-        }
-
-        userId = usersByEmail[0];
-      } else if (userData) {
-        userId = userData.user.id;
+      if (emailLookupError) {
+        throw emailLookupError;
       }
 
-      if (userId) {
-        // First check if user has a profile
-        const { data: existingProfile, error: profileError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", userId);
-          
-        if (profileError) throw profileError;
-        
-        if (!existingProfile || existingProfile.length === 0) {
-          // Create profile if it doesn't exist
-          const { error: insertError } = await supabase
-            .from("profiles")
-            .insert([{ id: userId, role: 'admin' }]);
-            
-          if (insertError) throw insertError;
-          toast.success(`Created admin profile for ${emailToPromote}`);
-        } else {
-          // Update existing profile
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ role: 'admin' })
-            .eq("id", userId);
-            
-          if (updateError) throw updateError;
-          toast.success(`Updated ${emailToPromote} to admin role`);
+      if (!usersByEmail || usersByEmail.length === 0) {
+        // Try an RPC if we have one (or create a stored procedure)
+        const { data: userIdFromRPC, error: rpcError } = await supabase
+          .rpc("find_user_id_by_email", { email_input: emailToPromote })
+          .single();
+
+        if (rpcError && rpcError.message !== "JSON object requested, multiple (or no) rows returned") {
+          throw rpcError;
         }
         
-        fetchUsers();
-        setEmailToPromote("");
+        if (!userIdFromRPC) {
+          toast.error(`User not found with email: ${emailToPromote}`);
+          return;
+        }
+        
+        // If we found a user ID from RPC
+        await updateRoleOrCreateProfile(userIdFromRPC);
       } else {
-        toast.error("Could not find user with that email");
+        // If we found user(s) from the profiles query
+        await updateRoleOrCreateProfile(usersByEmail[0].id);
       }
     } catch (error: any) {
       console.error("Error making admin by email:", error);
       toast.error(error.message);
     }
+  };
+
+  const updateRoleOrCreateProfile = async (userId: string) => {
+    try {
+      // Check if profile exists
+      const { data: existingProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      if (profileError && profileError.code !== "PGRST116") {
+        throw profileError;
+      }
+      
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert([{ id: userId, role: 'admin' }]);
+          
+        if (insertError) throw insertError;
+        toast.success(`Created admin profile for ${emailToPromote}`);
+      } else {
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ role: 'admin' })
+          .eq("id", userId);
+          
+        if (updateError) throw updateError;
+        toast.success(`Updated ${emailToPromote} to admin role`);
+      }
+      
+      setEmailToPromote("");
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error updating/creating profile:", error);
+      toast.error(error.message);
+    }
+  };
+
+  // Function to make nikhilbbes@gmail.com an admin
+  const makeNikhilAdmin = async () => {
+    setEmailToPromote("nikhilbbes@gmail.com");
+    await makeAdminByEmail();
   };
 
   if (loading) {
@@ -168,6 +188,12 @@ export function UsersTab() {
               />
               <Button onClick={makeAdminByEmail}>Make Admin</Button>
             </div>
+          </div>
+          <div className="flex-1 space-y-2">
+            <label className="text-sm font-medium">Quick Actions</label>
+            <Button onClick={makeNikhilAdmin} className="w-full">
+              Make nikhilbbes@gmail.com Admin
+            </Button>
           </div>
           <div className="flex-1 space-y-2">
             <label className="text-sm font-medium">Filter by Email</label>
