@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import BuyMedicine from "./pages/BuyMedicine";
 import HealthTips from "./pages/HealthTips";
@@ -14,7 +14,6 @@ import BookAppointment from "./pages/BookAppointment";
 import MedicalLoan from "./pages/MedicalLoan";
 import LoanStatus from "./pages/LoanStatus";
 import AdminDashboard from "./pages/AdminDashboard";
-import { useAuth } from "./contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -40,7 +39,7 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
           .from("profiles")
           .select("role")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("Error checking admin access:", error);

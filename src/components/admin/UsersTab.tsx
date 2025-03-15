@@ -120,7 +120,7 @@ export function UsersTab() {
         .from("profiles")
         .select("id")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       
       if (profileError && profileError.code !== "PGRST116") {
         console.error("Profile error:", profileError);

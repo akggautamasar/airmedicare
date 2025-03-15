@@ -33,17 +33,23 @@ export default function AdminDashboard() {
 
   const checkAdminStatus = async () => {
     try {
+      console.log("Checking admin status in AdminDashboard component for user:", user?.id);
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error checking admin status in AdminDashboard:", error);
+        throw error;
+      }
 
+      console.log("Profile data in AdminDashboard:", profile);
       if (profile?.role !== "admin") {
+        console.log("User is not admin, redirecting to home");
         navigate("/");
-        toast.error("Unauthorized access");
+        toast.error("You don't have admin privileges");
         return;
       }
 
@@ -52,6 +58,8 @@ export default function AdminDashboard() {
       console.error("Error checking admin status:", error);
       toast.error(error.message);
       navigate("/");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,13 +76,15 @@ export default function AdminDashboard() {
     } catch (error: any) {
       console.error("Error fetching hospitals:", error);
       toast.error(error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (!isAdmin || loading) {
-    return <div className="p-8">Loading...</div>;
+  if (loading) {
+    return <div className="p-8 text-center">Loading admin dashboard...</div>;
+  }
+
+  if (!isAdmin) {
+    return <div className="p-8 text-center">You need admin privileges to access this page.</div>;
   }
 
   return (
