@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,18 +35,23 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
+        console.log("Checking admin status for user ID:", user.id);
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", user.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error checking admin access:", error);
+          throw error;
+        }
 
+        console.log("Admin check profile data:", profile);
         setIsAdmin(profile?.role === "admin");
       } catch (error: any) {
         console.error("Error checking admin status:", error);
-        toast.error("Error checking admin status");
+        toast.error("Error checking admin status: " + error.message);
       } finally {
         setLoading(false);
       }
@@ -55,11 +61,17 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   }, [user]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="p-8 text-center">Checking admin access...</div>;
   }
 
-  if (!user || !isAdmin) {
-    toast.error("Unauthorized access");
+  if (!user) {
+    toast.error("Please log in to access the admin dashboard");
+    return <Navigate to="/" replace />;
+  }
+
+  if (!isAdmin) {
+    console.log("User is not an admin, redirecting");
+    toast.error("You don't have admin privileges");
     return <Navigate to="/" replace />;
   }
 
