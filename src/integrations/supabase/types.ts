@@ -57,6 +57,44 @@ export type Database = {
         }
         Relationships: []
       }
+      facility_doctors: {
+        Row: {
+          availability: string[] | null
+          contact: string | null
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          name: string
+          specialization: string | null
+        }
+        Insert: {
+          availability?: string[] | null
+          contact?: string | null
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          name: string
+          specialization?: string | null
+        }
+        Update: {
+          availability?: string[] | null
+          contact?: string | null
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          name?: string
+          specialization?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_doctors_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "healthcare_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_tips: {
         Row: {
           content: string
@@ -84,6 +122,63 @@ export type Database = {
           image_url?: string | null
           is_published?: boolean
           title?: string
+        }
+        Relationships: []
+      }
+      healthcare_facilities: {
+        Row: {
+          address: string | null
+          contact: string | null
+          created_at: string | null
+          district: string | null
+          id: string
+          image_urls: string[] | null
+          latitude: number
+          longitude: number
+          name: string
+          osm_id: string | null
+          rating: number | null
+          services: string[] | null
+          state: string | null
+          type: string
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact?: string | null
+          created_at?: string | null
+          district?: string | null
+          id?: string
+          image_urls?: string[] | null
+          latitude: number
+          longitude: number
+          name: string
+          osm_id?: string | null
+          rating?: number | null
+          services?: string[] | null
+          state?: string | null
+          type: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact?: string | null
+          created_at?: string | null
+          district?: string | null
+          id?: string
+          image_urls?: string[] | null
+          latitude?: number
+          longitude?: number
+          name?: string
+          osm_id?: string | null
+          rating?: number | null
+          services?: string[] | null
+          state?: string | null
+          type?: string
+          updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Navigation } from 'lucide-react';
+import { Search, MapPin, Navigation, ExternalLink, Phone } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from './ui/select';
 import { useToast } from './ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Location {
   latitude: number;
@@ -25,7 +26,10 @@ interface Facility {
   distance: string;
   rating: number;
   address: string;
+  contact?: string;
+  website?: string;
   openNow: boolean;
+  imageUrl?: string;
 }
 
 interface NominatimResult {
@@ -50,12 +54,32 @@ interface NominatimResult {
   importance?: number;
 }
 
+interface OverpassElement {
+  id: number;
+  lat: number;
+  lon: number;
+  tags: {
+    name?: string;
+    amenity?: string;
+    'addr:street'?: string;
+    'addr:housenumber'?: string;
+    'addr:city'?: string;
+    phone?: string;
+    website?: string;
+    opening_hours?: string;
+    healthcare?: string;
+    [key: string]: string | undefined;
+  };
+  type: string;
+}
+
 export const LocationSearch = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [facilityType, setFacilityType] = useState('hospital');
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const getUserLocation = () => {
@@ -161,14 +185,34 @@ export const LocationSearch = () => {
         throw new Error('Could not determine search location');
       }
       
-      // Now search for facilities near the determined location
-      const nearbyFacilities = await searchNearbyFacilities(
+      // First check if we have facilities in our database near the location
+      const dbFacilities = await searchFacilitiesInDatabase(
         searchLocation.lat,
         searchLocation.lon,
         facilityType
       );
       
-      setFacilities(nearbyFacilities);
+      if (dbFacilities.length > 0) {
+        setFacilities(dbFacilities);
+        toast({
+          title: 'Facilities Found',
+          description: `Found ${dbFacilities.length} facilities in our database.`,
+        });
+      } else {
+        // If no facilities in database, search OpenStreetMap
+        const nearbyFacilities = await searchNearbyFacilities(
+          searchLocation.lat,
+          searchLocation.lon,
+          facilityType
+        );
+        
+        setFacilities(nearbyFacilities);
+        
+        // Save facilities to database in the background
+        if (nearbyFacilities.length > 0) {
+          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon);
+        }
+      }
     } catch (error: any) {
       console.error('Error searching for facilities:', error);
       toast({
@@ -179,6 +223,64 @@ export const LocationSearch = () => {
       setFacilities([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const searchFacilitiesInDatabase = async (
+    latitude: number, 
+    longitude: number, 
+    type: string
+  ): Promise<Facility[]> => {
+    try {
+      // Convert facility type to match database format
+      let facilityType = type;
+      if (type === 'medical-store') facilityType = 'pharmacy';
+      if (type === 'pathology') facilityType = 'laboratory';
+      
+      // Query database within a radius (simple distance calculation)
+      // A more sophisticated spatial query would be better with PostGIS
+      const { data, error } = await supabase
+        .from('healthcare_facilities')
+        .select('*')
+        .eq('type', facilityType)
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (error) throw error;
+      
+      if (!data || data.length === 0) return [];
+      
+      // Filter and format results
+      return data.map(facility => {
+        const distance = calculateDistance(
+          latitude, 
+          longitude, 
+          Number(facility.latitude), 
+          Number(facility.longitude)
+        );
+        
+        // Only include facilities within 10km
+        if (distance > 10) return null;
+        
+        return {
+          id: facility.id,
+          name: facility.name,
+          type: facility.type,
+          distance: `${distance.toFixed(1)} km`,
+          rating: facility.rating || 4.0,
+          address: facility.address || 'Address not available',
+          contact: facility.contact,
+          website: facility.website,
+          openNow: Math.random() > 0.3, // Simulating open status since we don't have real-time data
+          imageUrl: facility.image_urls && facility.image_urls.length > 0 
+            ? facility.image_urls[0] 
+            : undefined
+        };
+      }).filter(Boolean) as Facility[];
+      
+    } catch (error) {
+      console.error('Error searching database:', error);
+      return [];
     }
   };
 
@@ -267,22 +369,28 @@ export const LocationSearch = () => {
       console.log('Overpass API response:', data);
       
       // Convert the Overpass API results to our Facility interface
-      const facilities: Facility[] = data.elements.map((element: any, index: number) => {
+      const facilities: Facility[] = data.elements.map((element: OverpassElement) => {
         // Calculate distance (simple approximation for now)
         const facilityLat = element.lat;
         const facilityLon = element.lon;
         const distance = calculateDistance(latitude, longitude, facilityLat, facilityLon);
         
+        // Get a random image for the facility
+        const imageId = getRandomImageId(amenityType);
+        
         return {
           id: element.id.toString(),
-          name: element.tags.name || `${amenityType.charAt(0).toUpperCase() + amenityType.slice(1)} ${index + 1}`,
+          name: element.tags.name || `${amenityType.charAt(0).toUpperCase() + amenityType.slice(1)} Facility`,
           type: element.tags.amenity || amenityType,
           distance: `${distance.toFixed(1)} km`,
           rating: Math.floor(Math.random() * 50 + 30) / 10, // Random rating between 3.0 and 5.0
           address: element.tags['addr:street'] 
             ? `${element.tags['addr:housenumber'] || ''} ${element.tags['addr:street'] || ''}, ${element.tags['addr:city'] || ''}`
-            : element.tags.description || 'Address unavailable',
-          openNow: Math.random() > 0.3, // Randomly determine if open (70% chance of being open)
+            : 'Address unavailable',
+          contact: element.tags.phone,
+          website: element.tags.website,
+          openNow: element.tags.opening_hours ? !element.tags.opening_hours.includes('closed') : Math.random() > 0.3,
+          imageUrl: `https://source.unsplash.com/${imageId}`
         };
       });
       
@@ -290,6 +398,66 @@ export const LocationSearch = () => {
     } catch (error) {
       console.error('Error searching nearby facilities:', error);
       throw error;
+    }
+  };
+
+  const saveFacilitiesToDatabase = async (facilities: Facility[], latitude: number, longitude: number) => {
+    if (!facilities.length) return;
+    
+    setIsSaving(true);
+    toast({
+      title: 'Saving Data',
+      description: 'Saving facility information to our database...',
+    });
+    
+    try {
+      // Map facility data to database schema
+      const facilitiesData = facilities.map(facility => {
+        // Extract services from name and type
+        const services = [facility.type];
+        if (facility.name.toLowerCase().includes('emergency')) services.push('Emergency Care');
+        if (facility.type === 'hospital') services.push('General Checkup');
+        
+        return {
+          osm_id: facility.id,
+          name: facility.name,
+          type: facility.type,
+          address: facility.address,
+          latitude: parseFloat(facility.distance.split(' ')[0]) || 0,
+          longitude: longitude,
+          contact: facility.contact || null,
+          website: facility.website || null,
+          services: services,
+          rating: facility.rating,
+          image_urls: facility.imageUrl ? [facility.imageUrl] : [],
+          district: 'Unknown', // We'd need to extract this from address
+          state: 'Unknown', // We'd need to extract this from address
+        };
+      });
+      
+      // Insert into database
+      const { error } = await supabase
+        .from('healthcare_facilities')
+        .upsert(facilitiesData, { 
+          onConflict: 'osm_id',
+          ignoreDuplicates: false 
+        });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Data Saved',
+        description: `Successfully saved ${facilities.length} facilities to our database.`,
+      });
+    } catch (error) {
+      console.error('Error saving facilities to database:', error);
+      toast({
+        title: 'Save Error',
+        description: 'Failed to save facility data to our database.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -314,12 +482,25 @@ export const LocationSearch = () => {
     return distance;
   };
 
+  const getRandomImageId = (facilityType: string): string => {
+    const hospitalImages = ['y5hQCIn1C6o', 's4qDC1iSaTY', 'L4iI59WB4Yw', 'cGNCepznaV8'];
+    const pharmacyImages = ['DPEPYPBZpfs', 'Vcm2lHXVz-o', '7jd3jKVEv3M', '2IBhAEtupH8'];
+    
+    const images = facilityType === 'pharmacy' ? pharmacyImages : hospitalImages;
+    return images[Math.floor(Math.random() * images.length)];
+  };
+
   // Trigger search when user presses Enter in the search box
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       searchFacilities();
     }
   };
+
+  useEffect(() => {
+    // Try to get user location when component mounts
+    getUserLocation();
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -367,14 +548,14 @@ export const LocationSearch = () => {
             />
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
-          <Button onClick={searchFacilities} disabled={isLoading}>
-            {isLoading ? 'Searching...' : 'Search'}
+          <Button onClick={searchFacilities} disabled={isLoading || isSaving}>
+            {isLoading ? 'Searching...' : isSaving ? 'Saving...' : 'Search'}
           </Button>
         </div>
       </div>
 
       <div className="space-y-4">
-        {facilities.length === 0 && !isLoading && (
+        {facilities.length === 0 && !isLoading && !isSaving && (
           <div className="text-center py-8 text-gray-500">
             {searchQuery || userLocation
               ? 'No facilities found in this area. Try expanding your search.'
@@ -385,23 +566,62 @@ export const LocationSearch = () => {
         {facilities.map((facility) => (
           <div
             key={facility.id}
-            className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+            className="p-4 border rounded-lg hover:shadow-md transition-shadow bg-white"
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold text-lg">{facility.name}</h3>
-                <p className="text-gray-600 text-sm">{facility.type}</p>
-                <p className="text-gray-500 text-sm mt-1">{facility.address}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-sm text-gray-500">{facility.distance}</span>
-                <div className="flex items-center mt-1">
-                  <span className="text-yellow-500">★</span>
-                  <span className="ml-1 text-sm">{facility.rating}</span>
+            <div className="flex flex-col md:flex-row gap-4">
+              {facility.imageUrl && (
+                <div className="w-full md:w-32 h-24 md:h-32 rounded overflow-hidden flex-shrink-0">
+                  <img
+                    src={facility.imageUrl}
+                    alt={facility.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <span className={`text-xs ${facility.openNow ? 'text-green-500' : 'text-red-500'}`}>
-                  {facility.openNow ? 'Open Now' : 'Closed'}
-                </span>
+              )}
+              
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-lg">{facility.name}</h3>
+                    <p className="text-gray-600 text-sm capitalize">{facility.type.replace('-', ' ')}</p>
+                    <p className="text-gray-500 text-sm mt-1">{facility.address}</p>
+                    
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {facility.contact && (
+                        <a 
+                          href={`tel:${facility.contact}`} 
+                          className="flex items-center text-sm text-blue-600 hover:underline"
+                        >
+                          <Phone className="h-3 w-3 mr-1" />
+                          {facility.contact}
+                        </a>
+                      )}
+                      
+                      {facility.website && (
+                        <a 
+                          href={facility.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex items-center text-sm text-blue-600 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Website
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="text-sm text-gray-500">{facility.distance}</span>
+                    <div className="flex items-center mt-1">
+                      <span className="text-yellow-500">★</span>
+                      <span className="ml-1 text-sm">{facility.rating}</span>
+                    </div>
+                    <span className={`text-xs ${facility.openNow ? 'text-green-500' : 'text-red-500'}`}>
+                      {facility.openNow ? 'Open Now' : 'Closed'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
