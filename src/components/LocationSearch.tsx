@@ -15,6 +15,7 @@ import { useToast } from './ui/use-toast';
 interface Location {
   latitude: number;
   longitude: number;
+  displayName?: string;
 }
 
 interface Facility {
@@ -65,7 +66,7 @@ export const LocationSearch = () => {
           setUserLocation({ latitude, longitude });
           toast({
             title: 'Location Found',
-            description: `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`,
+            description: 'Fetching your location details...',
           });
           
           // Reverse geocode to get the address at the user's location
@@ -99,8 +100,24 @@ export const LocationSearch = () => {
         throw new Error('Failed to fetch address from coordinates');
       }
       
-      const data = await response.json();
+      const data: NominatimResult = await response.json();
       console.log('Reverse geocode data:', data);
+      
+      // Update user location with display name
+      setUserLocation(prev => {
+        if (prev) {
+          return {
+            ...prev,
+            displayName: data.display_name
+          };
+        }
+        return prev;
+      });
+      
+      toast({
+        title: 'Location Found',
+        description: data.display_name,
+      });
       
       // Automatically search for nearby facilities once we have the user's location
       searchFacilities();
@@ -311,7 +328,7 @@ export const LocationSearch = () => {
           <MapPin className="text-medical-primary" />
           <span className="text-gray-600">
             {userLocation 
-              ? `Lat: ${userLocation.latitude.toFixed(4)}, Long: ${userLocation.longitude.toFixed(4)}`
+              ? userLocation.displayName || `Searching location...`
               : 'Location not detected'}
           </span>
           <Button
