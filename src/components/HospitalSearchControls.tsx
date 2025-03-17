@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Navigation } from "lucide-react";
+import { Search, Navigation, MapPin } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { upDistricts } from "@/data/upMedicalFacilities";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { indianStates, State } from "@/data/indianStates";
 
 interface HospitalSearchControlsProps {
   facilityType: string;
@@ -34,63 +36,142 @@ export const HospitalSearchControls = ({
   handleSearch,
   isLoading
 }: HospitalSearchControlsProps) => {
+  const [searchMethod, setSearchMethod] = useState<"location" | "stateDistrict">("location");
+  const [selectedState, setSelectedState] = useState<string>("UP");
+
+  // Get districts for selected state
+  const getDistrictsForState = (stateCode: string) => {
+    const state = indianStates.find(s => s.code === stateCode);
+    return state ? state.districts : [];
+  };
+
+  const handleStateChange = (stateCode: string) => {
+    setSelectedState(stateCode);
+    setSelectedDistrict("all"); // Reset district when state changes
+  };
+  
+  const handleDistrictChange = (districtCode: string) => {
+    setSelectedDistrict(districtCode);
+  };
+
+  const onSearch = () => {
+    handleSearch();
+  };
+
   return (
-    <div className="flex gap-2 mb-6 flex-col sm:flex-row">
-      <Select
-        value={facilityType}
-        onValueChange={setFacilityType}
-      >
-        <SelectTrigger className="w-full sm:w-[200px]">
-          <SelectValue placeholder="Facility type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Facilities</SelectItem>
-          <SelectItem value="hospital">Hospitals</SelectItem>
-          <SelectItem value="medical-store">Medical Stores</SelectItem>
-          <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select
-        value={selectedDistrict}
-        onValueChange={setSelectedDistrict}
-      >
-        <SelectTrigger className="w-full sm:w-[200px]">
-          <SelectValue placeholder="Select District" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Districts</SelectItem>
-          {upDistricts.map((district) => (
-            <SelectItem key={district} value={district}>
-              {district.charAt(0).toUpperCase() + district.slice(1)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className="flex gap-2 flex-1">
-        <Input
-          placeholder="Search by name or location..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full"
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-        />
+    <div className="space-y-4">
+      <Tabs value={searchMethod} onValueChange={(v) => setSearchMethod(v as "location" | "stateDistrict")} className="w-full">
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="location" className="flex-1">
+            <MapPin className="h-4 w-4 mr-2" />
+            Search by Your Location
+          </TabsTrigger>
+          <TabsTrigger value="stateDistrict" className="flex-1">
+            <Search className="h-4 w-4 mr-2" />
+            Search by State & District
+          </TabsTrigger>
+        </TabsList>
         
-        <Button 
-          onClick={getUserLocation}
-          variant="outline"
-          className="whitespace-nowrap"
-        >
-          <Navigation className="h-4 w-4 mr-2" />
-          My Location
-        </Button>
+        <TabsContent value="location" className="space-y-4">
+          <div className="flex gap-2 mb-6 flex-col sm:flex-row">
+            <Select
+              value={facilityType}
+              onValueChange={setFacilityType}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Facility type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Facilities</SelectItem>
+                <SelectItem value="hospital">Hospitals</SelectItem>
+                <SelectItem value="medical-store">Medical Stores</SelectItem>
+                <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex gap-2 flex-1">
+              <Input
+                placeholder="Search by name or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              
+              <Button 
+                onClick={getUserLocation}
+                variant="outline"
+                className="whitespace-nowrap"
+              >
+                <Navigation className="h-4 w-4 mr-2" />
+                My Location
+              </Button>
+              
+              <Button onClick={onSearch} className="whitespace-nowrap" disabled={isLoading}>
+                <Search className="mr-2 h-4 w-4" />
+                {isLoading ? 'Searching...' : 'Search'}
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
         
-        <Button onClick={handleSearch} className="whitespace-nowrap" disabled={isLoading}>
-          <Search className="mr-2 h-4 w-4" />
-          {isLoading ? 'Searching...' : 'Search'}
-        </Button>
-      </div>
+        <TabsContent value="stateDistrict" className="space-y-4">
+          <div className="flex gap-2 mb-6 flex-col sm:flex-row">
+            <Select
+              value={facilityType}
+              onValueChange={setFacilityType}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Facility type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Facilities</SelectItem>
+                <SelectItem value="hospital">Hospitals</SelectItem>
+                <SelectItem value="medical-store">Medical Stores</SelectItem>
+                <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedState}
+              onValueChange={handleStateChange}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Select State" />
+              </SelectTrigger>
+              <SelectContent>
+                {indianStates.map((state) => (
+                  <SelectItem key={state.code} value={state.code}>
+                    {state.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedDistrict}
+              onValueChange={handleDistrictChange}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Select District" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Districts</SelectItem>
+                {getDistrictsForState(selectedState).map((district) => (
+                  <SelectItem key={district.code} value={district.code}>
+                    {district.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button onClick={onSearch} className="whitespace-nowrap" disabled={isLoading}>
+              <Search className="mr-2 h-4 w-4" />
+              {isLoading ? 'Searching...' : 'Search'}
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

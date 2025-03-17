@@ -49,6 +49,12 @@ export const useHospitalLocationSearch = () => {
           });
         }
       );
+    } else {
+      toast({
+        title: "Geolocation Unavailable",
+        description: "Your browser doesn't support geolocation. Please select location manually.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -95,10 +101,25 @@ export const useHospitalLocationSearch = () => {
   };
 
   const geocodeDistrict = async (district: string): Promise<{lat: number, lon: number} | null> => {
+    if (district === "all") {
+      // Default to center of UP if no specific district
+      return { lat: 26.8467, lon: 80.9462 };
+    }
+    
     try {
-      const query = encodeURIComponent(`${district}, Uttar Pradesh, India`);
+      // Format query with state information if possible
+      let query = district;
+      if (!district.toLowerCase().includes("uttar pradesh") && 
+          !district.toLowerCase().includes("delhi") &&
+          !district.toLowerCase().includes("maharashtra")) {
+        query = `${district}, Uttar Pradesh, India`;
+      } else {
+        query = `${district}, India`;
+      }
+      
+      const encodedQuery = encodeURIComponent(query);
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1`,
         {
           headers: {
             'Accept-Language': 'en-US,en;q=0.9',
