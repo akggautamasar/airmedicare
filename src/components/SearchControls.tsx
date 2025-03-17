@@ -62,7 +62,7 @@ export const SearchControls = ({
       </div>
 
       <div className="flex gap-2 flex-col sm:flex-row">
-        <div className="w-full sm:w-[200px] z-10">
+        <div className="w-full sm:w-[200px] relative">
           <Select
             value={facilityType}
             onValueChange={onFacilityTypeChange}
@@ -70,7 +70,7 @@ export const SearchControls = ({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Facility type" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent className="bg-white z-50 absolute">
               <SelectItem value="hospital">Hospitals</SelectItem>
               <SelectItem value="medical-store">Medical Stores</SelectItem>
               <SelectItem value="pathology">Pathology Labs</SelectItem>

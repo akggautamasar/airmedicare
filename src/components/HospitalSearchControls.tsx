@@ -74,7 +74,7 @@ export const HospitalSearchControls = ({
         
         <TabsContent value="location" className="space-y-4">
           <div className="flex gap-2 mb-6 flex-col sm:flex-row">
-            <div className="w-full sm:w-[200px] z-20">
+            <div className="w-full sm:w-[200px] relative">
               <Select
                 value={facilityType}
                 onValueChange={setFacilityType}
@@ -82,7 +82,7 @@ export const HospitalSearchControls = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Facility type" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white z-50 max-h-[300px] overflow-y-auto">
                   <SelectItem value="all">All Facilities</SelectItem>
                   <SelectItem value="hospital">Hospitals</SelectItem>
                   <SelectItem value="medical-store">Medical Stores</SelectItem>
@@ -119,7 +119,7 @@ export const HospitalSearchControls = ({
         
         <TabsContent value="stateDistrict" className="space-y-4">
           <div className="flex gap-2 mb-6 flex-col sm:flex-row">
-            <div className="w-full sm:w-[200px] z-30">
+            <div className="w-full sm:w-[200px] relative">
               <Select
                 value={facilityType}
                 onValueChange={setFacilityType}
@@ -127,7 +127,7 @@ export const HospitalSearchControls = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Facility type" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white z-50 max-h-[300px] overflow-y-auto">
                   <SelectItem value="all">All Facilities</SelectItem>
                   <SelectItem value="hospital">Hospitals</SelectItem>
                   <SelectItem value="medical-store">Medical Stores</SelectItem>
@@ -136,7 +136,7 @@ export const HospitalSearchControls = ({
               </Select>
             </div>
 
-            <div className="w-full sm:w-[200px] z-20">
+            <div className="w-full sm:w-[200px] relative">
               <Select
                 value={selectedState}
                 onValueChange={handleStateChange}
@@ -144,7 +144,7 @@ export const HospitalSearchControls = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select State" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white z-40 max-h-[300px] overflow-y-auto">
                   {indianStates.map((state) => (
                     <SelectItem key={state.code} value={state.code}>
                       {state.name}
@@ -154,7 +154,7 @@ export const HospitalSearchControls = ({
               </Select>
             </div>
 
-            <div className="w-full sm:w-[200px] z-10">
+            <div className="w-full sm:w-[200px] relative">
               <Select
                 value={selectedDistrict}
                 onValueChange={handleDistrictChange}
@@ -162,7 +162,7 @@ export const HospitalSearchControls = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select District" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-[200px] overflow-y-auto">
+                <SelectContent className="bg-white z-30 max-h-[300px] overflow-y-auto">
                   <SelectItem value="all">All Districts</SelectItem>
                   {getDistrictsForState(selectedState).map((district) => (
                     <SelectItem key={district.code} value={district.code}>
