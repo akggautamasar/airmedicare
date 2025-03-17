@@ -74,20 +74,22 @@ export const HospitalSearchControls = ({
         
         <TabsContent value="location" className="space-y-4">
           <div className="flex gap-2 mb-6 flex-col sm:flex-row">
-            <Select
-              value={facilityType}
-              onValueChange={setFacilityType}
-            >
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Facility type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Facilities</SelectItem>
-                <SelectItem value="hospital">Hospitals</SelectItem>
-                <SelectItem value="medical-store">Medical Stores</SelectItem>
-                <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[200px] z-20">
+              <Select
+                value={facilityType}
+                onValueChange={setFacilityType}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Facility type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="all">All Facilities</SelectItem>
+                  <SelectItem value="hospital">Hospitals</SelectItem>
+                  <SelectItem value="medical-store">Medical Stores</SelectItem>
+                  <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex gap-2 flex-1">
               <Input
@@ -117,53 +119,59 @@ export const HospitalSearchControls = ({
         
         <TabsContent value="stateDistrict" className="space-y-4">
           <div className="flex gap-2 mb-6 flex-col sm:flex-row">
-            <Select
-              value={facilityType}
-              onValueChange={setFacilityType}
-            >
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Facility type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Facilities</SelectItem>
-                <SelectItem value="hospital">Hospitals</SelectItem>
-                <SelectItem value="medical-store">Medical Stores</SelectItem>
-                <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[200px] z-30">
+              <Select
+                value={facilityType}
+                onValueChange={setFacilityType}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Facility type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="all">All Facilities</SelectItem>
+                  <SelectItem value="hospital">Hospitals</SelectItem>
+                  <SelectItem value="medical-store">Medical Stores</SelectItem>
+                  <SelectItem value="pathology-lab">Pathology Labs</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select
-              value={selectedState}
-              onValueChange={handleStateChange}
-            >
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Select State" />
-              </SelectTrigger>
-              <SelectContent>
-                {indianStates.map((state) => (
-                  <SelectItem key={state.code} value={state.code}>
-                    {state.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[200px] z-20">
+              <Select
+                value={selectedState}
+                onValueChange={handleStateChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select State" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {indianStates.map((state) => (
+                    <SelectItem key={state.code} value={state.code}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select
-              value={selectedDistrict}
-              onValueChange={handleDistrictChange}
-            >
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Select District" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Districts</SelectItem>
-                {getDistrictsForState(selectedState).map((district) => (
-                  <SelectItem key={district.code} value={district.code}>
-                    {district.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[200px] z-10">
+              <Select
+                value={selectedDistrict}
+                onValueChange={handleDistrictChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select District" />
+                </SelectTrigger>
+                <SelectContent className="bg-white max-h-[200px] overflow-y-auto">
+                  <SelectItem value="all">All Districts</SelectItem>
+                  {getDistrictsForState(selectedState).map((district) => (
+                    <SelectItem key={district.code} value={district.code}>
+                      {district.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button onClick={onSearch} className="whitespace-nowrap" disabled={isLoading}>
               <Search className="mr-2 h-4 w-4" />

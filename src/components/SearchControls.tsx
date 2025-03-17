@@ -62,20 +62,22 @@ export const SearchControls = ({
       </div>
 
       <div className="flex gap-2 flex-col sm:flex-row">
-        <Select
-          value={facilityType}
-          onValueChange={onFacilityTypeChange}
-        >
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Facility type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="hospital">Hospitals</SelectItem>
-            <SelectItem value="medical-store">Medical Stores</SelectItem>
-            <SelectItem value="pathology">Pathology Labs</SelectItem>
-            <SelectItem value="clinic">Clinics</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-[200px] z-10">
+          <Select
+            value={facilityType}
+            onValueChange={onFacilityTypeChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Facility type" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="hospital">Hospitals</SelectItem>
+              <SelectItem value="medical-store">Medical Stores</SelectItem>
+              <SelectItem value="pathology">Pathology Labs</SelectItem>
+              <SelectItem value="clinic">Clinics</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex-1 relative">
           <Input
             placeholder="Search for hospitals, medical stores, labs..."
