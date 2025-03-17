@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { upDistricts } from "@/data/upMedicalFacilities";
+import { indianStates } from "@/data/indianStates";
 
 interface Location {
   latitude: number;
@@ -80,21 +80,31 @@ export const useHospitalLocationSearch = () => {
                        data.address.city || 
                        data.address.town || 
                        "";
-                       
+      
       if (district) {
-        const matchedDistrict = upDistricts.find(d => 
-          district.toLowerCase().includes(d.toLowerCase()) || 
-          d.toLowerCase().includes(district.toLowerCase())
-        );
-        
-        if (matchedDistrict) {
-          setSelectedDistrict(matchedDistrict);
-          toast({
-            title: "District Found",
-            description: `You appear to be in or near ${matchedDistrict}`,
-          });
+        // Search through all states and districts
+        for (const state of indianStates) {
+          const matchedDistrict = state.districts.find(d => 
+            district.toLowerCase().includes(d.name.toLowerCase()) || 
+            d.name.toLowerCase().includes(district.toLowerCase())
+          );
+          
+          if (matchedDistrict) {
+            setSelectedDistrict(matchedDistrict.code);
+            toast({
+              title: "District Found",
+              description: `You appear to be in or near ${matchedDistrict.name}, ${state.name}`,
+            });
+            return;
+          }
         }
       }
+      
+      // If no match found
+      toast({
+        title: "Location Found",
+        description: "Could not match to a specific district. Please select manually.",
+      });
     } catch (error) {
       console.error("Error in reverse geocoding:", error);
     }
@@ -102,17 +112,28 @@ export const useHospitalLocationSearch = () => {
 
   const geocodeDistrict = async (district: string): Promise<{lat: number, lon: number} | null> => {
     if (district === "all") {
-      // Default to center of UP if no specific district
-      return { lat: 26.8467, lon: 80.9462 };
+      // Default to center of India if no specific district
+      return { lat: 20.5937, lon: 78.9629 };
     }
     
     try {
+      // Find the district information
+      let districtName = "";
+      let stateName = "";
+      
+      for (const state of indianStates) {
+        const matchedDistrict = state.districts.find(d => d.code === district);
+        if (matchedDistrict) {
+          districtName = matchedDistrict.name;
+          stateName = state.name;
+          break;
+        }
+      }
+      
       // Format query with state information if possible
       let query = district;
-      if (!district.toLowerCase().includes("uttar pradesh") && 
-          !district.toLowerCase().includes("delhi") &&
-          !district.toLowerCase().includes("maharashtra")) {
-        query = `${district}, Uttar Pradesh, India`;
+      if (districtName && stateName) {
+        query = `${districtName}, ${stateName}, India`;
       } else {
         query = `${district}, India`;
       }
@@ -135,7 +156,7 @@ export const useHospitalLocationSearch = () => {
       if (results.length === 0) {
         toast({
           title: "Geocoding Error",
-          description: `Could not find coordinates for ${district}`,
+          description: `Could not find coordinates for ${districtName || district}`,
           variant: "destructive",
         });
         return null;
