@@ -141,7 +141,7 @@ export const useFacilityData = () => {
         
         // Save facilities to database in the background
         if (nearbyFacilities.length > 0) {
-          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon, districtName);
+          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon, districtName, selectedState || '');
         }
       }
     } catch (error: any) {
@@ -190,7 +190,7 @@ export const useFacilityData = () => {
 
       const { data, error } = await query
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
         
       if (error) throw error;
       
@@ -238,7 +238,7 @@ export const useFacilityData = () => {
   ): Promise<Facility[]> => {
     try {
       // Construct the Overpass API query
-      const radius = 5000; // Search radius in meters (5km)
+      const radius = 10000; // Search radius in meters (10km)
       let amenityType = 'hospital';
       
       switch (type) {
@@ -249,13 +249,13 @@ export const useFacilityData = () => {
           amenityType = 'pharmacy';
           break;
         case 'pathology':
-          amenityType = 'doctors';
+          amenityType = 'doctors|laboratory';
           break;
         case 'clinic':
           amenityType = 'clinic';
           break;
         case 'all':
-          amenityType = 'hospital|pharmacy|doctors|clinic';
+          amenityType = 'hospital|pharmacy|doctors|clinic|laboratory';
           break;
         default:
           amenityType = 'hospital';
@@ -348,7 +348,13 @@ export const useFacilityData = () => {
     }
   };
 
-  const saveFacilitiesToDatabase = async (facilities: Facility[], latitude: number, longitude: number, district?: string) => {
+  const saveFacilitiesToDatabase = async (
+    facilities: Facility[], 
+    latitude: number, 
+    longitude: number, 
+    district?: string,
+    state?: string
+  ) => {
     if (!facilities.length) return;
     
     setIsSaving(true);
@@ -378,7 +384,7 @@ export const useFacilityData = () => {
           rating: facility.rating,
           image_urls: facility.imageUrl ? [facility.imageUrl] : [],
           district: facility.district || district || 'Unknown',
-          state: 'Unknown', // We'd need to extract this from address
+          state: state || 'Unknown',
         };
       });
       
@@ -432,9 +438,15 @@ export const useFacilityData = () => {
   const getRandomImageId = (facilityType: string): string => {
     const hospitalImages = ['y5hQCIn1C6o', 's4qDC1iSaTY', 'L4iI59WB4Yw', 'cGNCepznaV8'];
     const pharmacyImages = ['DPEPYPBZpfs', 'Vcm2lHXVz-o', '7jd3jKVEv3M', '2IBhAEtupH8'];
+    const labImages = ['nOVQ8Gj1i8E', 'L8tWZT4CcVQ', '66JMmdEIn9E', 'HJckKnwCXxQ'];
     
-    const images = facilityType === 'pharmacy' ? pharmacyImages : hospitalImages;
-    return images[Math.floor(Math.random() * images.length)];
+    if (facilityType === 'pharmacy' || facilityType === 'medical-store') {
+      return pharmacyImages[Math.floor(Math.random() * pharmacyImages.length)];
+    } else if (facilityType === 'laboratory' || facilityType === 'doctors' || facilityType === 'pathology') {
+      return labImages[Math.floor(Math.random() * labImages.length)];
+    } else {
+      return hospitalImages[Math.floor(Math.random() * hospitalImages.length)];
+    }
   };
 
   return {
