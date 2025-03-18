@@ -23,6 +23,10 @@ interface SearchControlsProps {
   isSaving: boolean;
   facilityType: string;
   onFacilityTypeChange: (type: string) => void;
+  selectedState: string;
+  setSelectedState: (state: string) => void;
+  selectedDistrict: string;
+  setSelectedDistrict: (district: string) => void;
 }
 
 export const SearchControls = ({
@@ -35,10 +39,12 @@ export const SearchControls = ({
   isSaving,
   facilityType,
   onFacilityTypeChange,
+  selectedState,
+  setSelectedState,
+  selectedDistrict,
+  setSelectedDistrict,
 }: SearchControlsProps) => {
   const [searchMethod, setSearchMethod] = useState<"location" | "stateDistrict">("location");
-  const [selectedState, setSelectedState] = useState<string>("UP");
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
 
   // Handle key press in search box
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -51,6 +57,12 @@ export const SearchControls = ({
   const getDistrictsForState = (stateCode: string) => {
     const state = indianStates.find(s => s.code === stateCode);
     return state ? state.districts : [];
+  };
+
+  // Handle state change
+  const handleStateChange = (value: string) => {
+    setSelectedState(value);
+    setSelectedDistrict("all"); // Reset district when state changes
   };
 
   return (
@@ -143,7 +155,7 @@ export const SearchControls = ({
             <div className="w-full sm:w-[200px] relative">
               <Select
                 value={selectedState}
-                onValueChange={setSelectedState}
+                onValueChange={handleStateChange}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select State" />

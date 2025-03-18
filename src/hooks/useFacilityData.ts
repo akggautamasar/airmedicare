@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { indianStates } from '@/data/indianStates';
 
 interface Location {
   latitude: number;
@@ -20,7 +21,7 @@ export interface Facility {
   website?: string;
   openNow: boolean;
   imageUrl?: string;
-  district?: string; // Added district field for better filtering
+  district?: string;
 }
 
 interface OverpassElement {
@@ -57,39 +58,32 @@ export const useFacilityData = () => {
     selectedState?: string,
     selectedDistrict?: string
   ) => {
-    if (!userLocation && !searchQuery && !selectedDistrict) {
-      toast({
-        title: 'Search Error',
-        description: 'Please provide a location, search query, or select a district.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsLoading(true);
     
     try {
       let searchLocation: { lat: number; lon: number, displayName?: string } | null = null;
-      let searchDistrict = selectedDistrict;
+      let districtName = "";
       
       // If district is selected, use that as primary search parameter
-      if (selectedDistrict && selectedDistrict !== 'all') {
-        const locationQuery = `${selectedDistrict}, ${selectedState || 'India'}`;
-        searchLocation = await geocodeSearchQuery(locationQuery);
-        if (!searchLocation) {
-          throw new Error(`Could not determine location for ${locationQuery}`);
+      if (selectedState && selectedDistrict && selectedDistrict !== 'all') {
+        // Get the district and state names for better search
+        const state = indianStates.find(s => s.code === selectedState);
+        const district = state?.districts.find(d => d.code === selectedDistrict);
+        
+        if (state && district) {
+          districtName = district.name;
+          const locationQuery = `${district.name}, ${state.name}, India`;
+          console.log(`Searching for location: ${locationQuery}`);
+          
+          searchLocation = await geocodeSearchQuery(locationQuery);
+          if (!searchLocation) {
+            throw new Error(`Could not determine location for ${locationQuery}`);
+          }
         }
-      }
+      } 
       // If search query is provided, geocode it to get coordinates
       else if (searchQuery) {
         searchLocation = await geocodeSearchQuery(searchQuery);
-        if (searchLocation?.displayName) {
-          // Try to extract district from display name
-          const nameParts = searchLocation.displayName.split(',').map(part => part.trim());
-          if (nameParts.length > 1) {
-            searchDistrict = nameParts[0];
-          }
-        }
       } 
       // Use user's current location
       else if (userLocation) {
@@ -98,18 +92,32 @@ export const useFacilityData = () => {
           lon: userLocation.longitude,
           displayName: userLocation.displayName
         };
+      } else {
+        // If nothing is provided, show a message
+        toast({
+          title: 'Search Error',
+          description: 'Please provide a location, search query, or select a district.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
       }
       
       if (!searchLocation) {
         throw new Error('Could not determine search location');
       }
       
+      console.log("Search location:", searchLocation);
+      console.log("Selected district:", selectedDistrict, "District name:", districtName);
+      
       // First check if we have facilities in our database near the location
       const dbFacilities = await searchFacilitiesInDatabase(
         searchLocation.lat,
         searchLocation.lon,
         facilityType,
-        searchDistrict
+        selectedState,
+        selectedDistrict,
+        districtName
       );
       
       if (dbFacilities.length > 0) {
@@ -124,14 +132,16 @@ export const useFacilityData = () => {
           searchLocation.lat,
           searchLocation.lon,
           facilityType,
-          searchDistrict
+          selectedState,
+          selectedDistrict,
+          districtName
         );
         
         setFacilities(nearbyFacilities);
         
         // Save facilities to database in the background
         if (nearbyFacilities.length > 0) {
-          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon, searchDistrict);
+          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon, districtName);
         }
       }
     } catch (error: any) {
@@ -151,7 +161,9 @@ export const useFacilityData = () => {
     latitude: number, 
     longitude: number, 
     type: string,
-    district?: string
+    selectedState?: string,
+    selectedDistrict?: string,
+    districtName?: string
   ): Promise<Facility[]> => {
     try {
       // Convert facility type to match database format
@@ -170,8 +182,10 @@ export const useFacilityData = () => {
       }
       
       // Apply district filter if provided
-      if (district && district !== 'all') {
-        query = query.ilike('district', `%${district}%`);
+      if (selectedDistrict && selectedDistrict !== 'all' && districtName) {
+        console.log(`Filtering for district: ${districtName}`);
+        // Use a more flexible search pattern for district
+        query = query.ilike('district', `%${districtName}%`);
       }
 
       const { data, error } = await query
@@ -201,7 +215,7 @@ export const useFacilityData = () => {
           contact: facility.contact,
           website: facility.website,
           district: facility.district,
-          openNow: Math.random() > 0.3, // Simulating open status since we don't have real-time data
+          openNow: Math.random() > 0.3, // Simulating open status
           imageUrl: facility.image_urls && facility.image_urls.length > 0 
             ? facility.image_urls[0] 
             : undefined
@@ -218,7 +232,9 @@ export const useFacilityData = () => {
     latitude: number,
     longitude: number,
     type: string,
-    district?: string
+    selectedState?: string,
+    selectedDistrict?: string,
+    districtName?: string
   ): Promise<Facility[]> => {
     try {
       // Construct the Overpass API query
@@ -269,7 +285,7 @@ export const useFacilityData = () => {
       
       // Convert the Overpass API results to our Facility interface
       const allFacilities: Facility[] = data.elements.map((element: OverpassElement) => {
-        // Calculate distance (simple approximation for now)
+        // Calculate distance
         const facilityLat = element.lat;
         const facilityLon = element.lon;
         const distance = calculateDistance(latitude, longitude, facilityLat, facilityLon);
@@ -277,10 +293,10 @@ export const useFacilityData = () => {
         // Get a random image for the facility
         const imageId = getRandomImageId(element.tags.amenity || amenityType);
 
-        // Extract district from tags
+        // Extract district from tags or use the selected district
         const facilityDistrict = element.tags['addr:district'] || 
                               element.tags['addr:city'] || 
-                              district || 
+                              districtName || 
                               'Unknown';
         
         return {
@@ -302,12 +318,27 @@ export const useFacilityData = () => {
 
       // Filter by district if provided
       let facilities = allFacilities;
-      if (district && district !== 'all') {
+      if (selectedDistrict && selectedDistrict !== 'all' && districtName) {
+        console.log(`Filtering OpenStreetMap results for district: ${districtName}`);
         facilities = allFacilities.filter(facility => {
-          // Case-insensitive partial match for district
-          return facility.district.toLowerCase().includes(district.toLowerCase()) ||
-                 district.toLowerCase().includes(facility.district.toLowerCase());
+          // Look for district name in the facility district field or address
+          const matchesDistrict = 
+            facility.district.toLowerCase().includes(districtName.toLowerCase()) ||
+            districtName.toLowerCase().includes(facility.district.toLowerCase()) ||
+            (facility.address && facility.address.toLowerCase().includes(districtName.toLowerCase()));
+          
+          return matchesDistrict;
         });
+        
+        // If no results after filtering, add a message
+        if (facilities.length === 0) {
+          console.log(`No facilities found in district: ${districtName}`);
+          toast({
+            title: 'No Results',
+            description: `No healthcare facilities found in ${districtName}. Showing nearby results instead.`,
+          });
+          return allFacilities; // Return all facilities as fallback
+        }
       }
 
       return facilities;

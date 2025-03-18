@@ -6,7 +6,7 @@ import { useLocationSearch } from '@/hooks/useLocationSearch';
 import { useFacilityData } from '@/hooks/useFacilityData';
 
 export const LocationSearch = () => {
-  const [facilityType, setFacilityType] = useState('all'); // Changed default to 'all'
+  const [facilityType, setFacilityType] = useState('all');
   const { 
     userLocation, 
     searchQuery, 
@@ -30,7 +30,7 @@ export const LocationSearch = () => {
     const method = document.querySelector('[data-state="active"][data-radix-collection-item]')?.getAttribute('value');
     
     if (method === 'stateDistrict') {
-      // Get the selected state and district values
+      // Get the selected state and district values and use them for searching
       searchFacilities(null, "", facilityType, geocodeSearchQuery, selectedState, selectedDistrict);
     } else {
       // Use location-based search
@@ -50,6 +50,10 @@ export const LocationSearch = () => {
         isSaving={isSaving}
         facilityType={facilityType}
         onFacilityTypeChange={setFacilityType}
+        selectedState={selectedState}
+        setSelectedState={setSelectedState}
+        selectedDistrict={selectedDistrict}
+        setSelectedDistrict={setSelectedDistrict}
       />
 
       <FacilityList
