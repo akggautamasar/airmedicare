@@ -96,6 +96,7 @@ export const SearchControls = ({
                   <SelectValue placeholder="Facility type" />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50 absolute max-h-[300px] overflow-y-auto">
+                  <SelectItem value="all">All Facilities</SelectItem>
                   <SelectItem value="hospital">Hospitals</SelectItem>
                   <SelectItem value="medical-store">Medical Stores</SelectItem>
                   <SelectItem value="pathology">Pathology Labs</SelectItem>
@@ -130,6 +131,7 @@ export const SearchControls = ({
                   <SelectValue placeholder="Facility type" />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50 absolute max-h-[300px] overflow-y-auto">
+                  <SelectItem value="all">All Facilities</SelectItem>
                   <SelectItem value="hospital">Hospitals</SelectItem>
                   <SelectItem value="medical-store">Medical Stores</SelectItem>
                   <SelectItem value="pathology">Pathology Labs</SelectItem>

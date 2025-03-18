@@ -20,6 +20,7 @@ export interface Facility {
   website?: string;
   openNow: boolean;
   imageUrl?: string;
+  district?: string; // Added district field for better filtering
 }
 
 interface OverpassElement {
@@ -32,6 +33,7 @@ interface OverpassElement {
     'addr:street'?: string;
     'addr:housenumber'?: string;
     'addr:city'?: string;
+    'addr:district'?: string;
     phone?: string;
     website?: string;
     opening_hours?: string;
@@ -51,12 +53,14 @@ export const useFacilityData = () => {
     userLocation: Location | null, 
     searchQuery: string, 
     facilityType: string,
-    geocodeSearchQuery: (query: string) => Promise<{ lat: number; lon: number } | null>
+    geocodeSearchQuery: (query: string) => Promise<{ lat: number; lon: number, displayName?: string } | null>,
+    selectedState?: string,
+    selectedDistrict?: string
   ) => {
-    if (!userLocation && !searchQuery) {
+    if (!userLocation && !searchQuery && !selectedDistrict) {
       toast({
         title: 'Search Error',
-        description: 'Please provide a location or search query.',
+        description: 'Please provide a location, search query, or select a district.',
         variant: 'destructive',
       });
       return;
@@ -65,16 +69,34 @@ export const useFacilityData = () => {
     setIsLoading(true);
     
     try {
-      let searchLocation: { lat: number; lon: number } | null = null;
+      let searchLocation: { lat: number; lon: number, displayName?: string } | null = null;
+      let searchDistrict = selectedDistrict;
       
+      // If district is selected, use that as primary search parameter
+      if (selectedDistrict && selectedDistrict !== 'all') {
+        const locationQuery = `${selectedDistrict}, ${selectedState || 'India'}`;
+        searchLocation = await geocodeSearchQuery(locationQuery);
+        if (!searchLocation) {
+          throw new Error(`Could not determine location for ${locationQuery}`);
+        }
+      }
       // If search query is provided, geocode it to get coordinates
-      if (searchQuery) {
+      else if (searchQuery) {
         searchLocation = await geocodeSearchQuery(searchQuery);
-      } else if (userLocation) {
-        // Use user's current location
+        if (searchLocation?.displayName) {
+          // Try to extract district from display name
+          const nameParts = searchLocation.displayName.split(',').map(part => part.trim());
+          if (nameParts.length > 1) {
+            searchDistrict = nameParts[0];
+          }
+        }
+      } 
+      // Use user's current location
+      else if (userLocation) {
         searchLocation = {
           lat: userLocation.latitude,
           lon: userLocation.longitude,
+          displayName: userLocation.displayName
         };
       }
       
@@ -86,7 +108,8 @@ export const useFacilityData = () => {
       const dbFacilities = await searchFacilitiesInDatabase(
         searchLocation.lat,
         searchLocation.lon,
-        facilityType
+        facilityType,
+        searchDistrict
       );
       
       if (dbFacilities.length > 0) {
@@ -100,14 +123,15 @@ export const useFacilityData = () => {
         const nearbyFacilities = await searchNearbyFacilities(
           searchLocation.lat,
           searchLocation.lon,
-          facilityType
+          facilityType,
+          searchDistrict
         );
         
         setFacilities(nearbyFacilities);
         
         // Save facilities to database in the background
         if (nearbyFacilities.length > 0) {
-          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon);
+          saveFacilitiesToDatabase(nearbyFacilities, searchLocation.lat, searchLocation.lon, searchDistrict);
         }
       }
     } catch (error: any) {
@@ -126,7 +150,8 @@ export const useFacilityData = () => {
   const searchFacilitiesInDatabase = async (
     latitude: number, 
     longitude: number, 
-    type: string
+    type: string,
+    district?: string
   ): Promise<Facility[]> => {
     try {
       // Convert facility type to match database format
@@ -134,12 +159,22 @@ export const useFacilityData = () => {
       if (type === 'medical-store') facilityType = 'pharmacy';
       if (type === 'pathology') facilityType = 'laboratory';
       
-      // Query database within a radius (simple distance calculation)
-      // A more sophisticated spatial query would be better with PostGIS
-      const { data, error } = await supabase
+      // Build query based on available filters
+      let query = supabase
         .from('healthcare_facilities')
-        .select('*')
-        .eq('type', facilityType)
+        .select('*');
+      
+      // Apply type filter if not "all"
+      if (facilityType !== 'all') {
+        query = query.eq('type', facilityType);
+      }
+      
+      // Apply district filter if provided
+      if (district && district !== 'all') {
+        query = query.ilike('district', `%${district}%`);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(20);
         
@@ -156,9 +191,6 @@ export const useFacilityData = () => {
           Number(facility.longitude)
         );
         
-        // Only include facilities within 10km
-        if (distance > 10) return null;
-        
         return {
           id: facility.id,
           name: facility.name,
@@ -168,12 +200,13 @@ export const useFacilityData = () => {
           address: facility.address || 'Address not available',
           contact: facility.contact,
           website: facility.website,
+          district: facility.district,
           openNow: Math.random() > 0.3, // Simulating open status since we don't have real-time data
           imageUrl: facility.image_urls && facility.image_urls.length > 0 
             ? facility.image_urls[0] 
             : undefined
         };
-      }).filter(Boolean) as Facility[];
+      });
       
     } catch (error) {
       console.error('Error searching database:', error);
@@ -184,11 +217,11 @@ export const useFacilityData = () => {
   const searchNearbyFacilities = async (
     latitude: number,
     longitude: number,
-    type: string
+    type: string,
+    district?: string
   ): Promise<Facility[]> => {
     try {
       // Construct the Overpass API query
-      // This example searches for hospitals, clinics, doctors, pharmacies based on the type filter
       const radius = 5000; // Search radius in meters (5km)
       let amenityType = 'hospital';
       
@@ -205,13 +238,16 @@ export const useFacilityData = () => {
         case 'clinic':
           amenityType = 'clinic';
           break;
+        case 'all':
+          amenityType = 'hospital|pharmacy|doctors|clinic';
+          break;
         default:
           amenityType = 'hospital';
       }
       
       const overpassQuery = `
         [out:json];
-        node["amenity"="${amenityType}"](around:${radius},${latitude},${longitude});
+        node["amenity"~"${amenityType}"](around:${radius},${latitude},${longitude});
         out body;
       `;
       
@@ -232,18 +268,24 @@ export const useFacilityData = () => {
       console.log('Overpass API response:', data);
       
       // Convert the Overpass API results to our Facility interface
-      const facilities: Facility[] = data.elements.map((element: OverpassElement) => {
+      const allFacilities: Facility[] = data.elements.map((element: OverpassElement) => {
         // Calculate distance (simple approximation for now)
         const facilityLat = element.lat;
         const facilityLon = element.lon;
         const distance = calculateDistance(latitude, longitude, facilityLat, facilityLon);
         
         // Get a random image for the facility
-        const imageId = getRandomImageId(amenityType);
+        const imageId = getRandomImageId(element.tags.amenity || amenityType);
+
+        // Extract district from tags
+        const facilityDistrict = element.tags['addr:district'] || 
+                              element.tags['addr:city'] || 
+                              district || 
+                              'Unknown';
         
         return {
           id: element.id.toString(),
-          name: element.tags.name || `${amenityType.charAt(0).toUpperCase() + amenityType.slice(1)} Facility`,
+          name: element.tags.name || `${element.tags.amenity ? element.tags.amenity.charAt(0).toUpperCase() + element.tags.amenity.slice(1) : 'Healthcare'} Facility`,
           type: element.tags.amenity || amenityType,
           distance: `${distance.toFixed(1)} km`,
           rating: Math.floor(Math.random() * 50 + 30) / 10, // Random rating between 3.0 and 5.0
@@ -252,11 +294,22 @@ export const useFacilityData = () => {
             : 'Address unavailable',
           contact: element.tags.phone,
           website: element.tags.website,
+          district: facilityDistrict,
           openNow: element.tags.opening_hours ? !element.tags.opening_hours.includes('closed') : Math.random() > 0.3,
           imageUrl: `https://source.unsplash.com/${imageId}`
         };
       });
-      
+
+      // Filter by district if provided
+      let facilities = allFacilities;
+      if (district && district !== 'all') {
+        facilities = allFacilities.filter(facility => {
+          // Case-insensitive partial match for district
+          return facility.district.toLowerCase().includes(district.toLowerCase()) ||
+                 district.toLowerCase().includes(facility.district.toLowerCase());
+        });
+      }
+
       return facilities;
     } catch (error) {
       console.error('Error searching nearby facilities:', error);
@@ -264,7 +317,7 @@ export const useFacilityData = () => {
     }
   };
 
-  const saveFacilitiesToDatabase = async (facilities: Facility[], latitude: number, longitude: number) => {
+  const saveFacilitiesToDatabase = async (facilities: Facility[], latitude: number, longitude: number, district?: string) => {
     if (!facilities.length) return;
     
     setIsSaving(true);
@@ -286,14 +339,14 @@ export const useFacilityData = () => {
           name: facility.name,
           type: facility.type,
           address: facility.address,
-          latitude: parseFloat(facility.distance.split(' ')[0]) || 0,
+          latitude: latitude,
           longitude: longitude,
           contact: facility.contact || null,
           website: facility.website || null,
           services: services,
           rating: facility.rating,
           image_urls: facility.imageUrl ? [facility.imageUrl] : [],
-          district: 'Unknown', // We'd need to extract this from address
+          district: facility.district || district || 'Unknown',
           state: 'Unknown', // We'd need to extract this from address
         };
       });
