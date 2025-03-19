@@ -6,6 +6,7 @@ import { indianStates } from "@/data/indianStates";
 interface Location {
   latitude: number;
   longitude: number;
+  displayName?: string;
 }
 
 interface NominatimResult {
@@ -24,6 +25,7 @@ interface NominatimResult {
 
 export const useHospitalLocationSearch = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
+  const [selectedState, setSelectedState] = useState<string>("UP");
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const { toast } = useToast();
 
@@ -90,6 +92,7 @@ export const useHospitalLocationSearch = () => {
           );
           
           if (matchedDistrict) {
+            setSelectedState(state.code);
             setSelectedDistrict(matchedDistrict.code);
             toast({
               title: "District Found",
@@ -110,9 +113,46 @@ export const useHospitalLocationSearch = () => {
     }
   };
 
-  const geocodeDistrict = async (district: string): Promise<{lat: number, lon: number} | null> => {
-    if (district === "all") {
-      // Default to center of India if no specific district
+  const geocodeDistrict = async (district: string): Promise<{lat: number, lon: number, displayName?: string} | null> => {
+    if (district === "all" && selectedState !== "all") {
+      // Try to geocode the state if no specific district
+      const state = indianStates.find(s => s.code === selectedState);
+      if (state) {
+        const stateQuery = `${state.name}, India`;
+        try {
+          const encodedQuery = encodeURIComponent(stateQuery);
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1`,
+            {
+              headers: {
+                'Accept-Language': 'en-US,en;q=0.9',
+                'User-Agent': 'HealthcareApp/1.0',
+              },
+            }
+          );
+          
+          if (!response.ok) throw new Error("Failed to geocode state");
+          
+          const results: NominatimResult[] = await response.json();
+          
+          if (results.length > 0) {
+            return {
+              lat: parseFloat(results[0].lat),
+              lon: parseFloat(results[0].lon),
+              displayName: results[0].display_name
+            };
+          }
+        } catch (error) {
+          console.error("Error geocoding state:", error);
+        }
+      }
+      
+      // Default to center of India if state geocoding fails
+      return { lat: 20.5937, lon: 78.9629 };
+    }
+    
+    if (district === "all" && selectedState === "all") {
+      // Default to center of India if no specific state or district
       return { lat: 20.5937, lon: 78.9629 };
     }
     
@@ -165,6 +205,7 @@ export const useHospitalLocationSearch = () => {
       return {
         lat: parseFloat(results[0].lat),
         lon: parseFloat(results[0].lon),
+        displayName: results[0].display_name
       };
     } catch (error) {
       console.error("Error geocoding district:", error);
@@ -175,6 +216,8 @@ export const useHospitalLocationSearch = () => {
   return {
     selectedDistrict,
     setSelectedDistrict,
+    selectedState,
+    setSelectedState,
     userLocation,
     setUserLocation,
     getUserLocation,

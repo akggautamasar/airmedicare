@@ -12,6 +12,8 @@ export const HospitalSearch = () => {
   const {
     selectedDistrict,
     setSelectedDistrict,
+    selectedState,
+    setSelectedState,
     userLocation,
     getUserLocation,
     geocodeDistrict
@@ -24,13 +26,27 @@ export const HospitalSearch = () => {
   } = useHospitalFacilityData();
 
   const onSearch = () => {
-    handleSearch(
-      facilityType,
-      selectedDistrict,
-      searchQuery,
-      userLocation,
-      geocodeDistrict
-    );
+    const activeTabElement = document.querySelector('[data-state="active"][data-radix-collection-item]');
+    const searchMethod = activeTabElement?.getAttribute('value') as "location" | "stateDistrict" || "location";
+
+    if (searchMethod === "stateDistrict") {
+      handleSearch(
+        facilityType,
+        selectedDistrict,
+        "",
+        null,
+        geocodeDistrict,
+        selectedState
+      );
+    } else {
+      handleSearch(
+        facilityType,
+        selectedDistrict,
+        searchQuery,
+        userLocation,
+        geocodeDistrict
+      );
+    }
   };
 
   useEffect(() => {
@@ -45,6 +61,8 @@ export const HospitalSearch = () => {
       <HospitalSearchControls
         facilityType={facilityType}
         setFacilityType={setFacilityType}
+        selectedState={selectedState}
+        setSelectedState={setSelectedState}
         selectedDistrict={selectedDistrict}
         setSelectedDistrict={setSelectedDistrict}
         searchQuery={searchQuery}

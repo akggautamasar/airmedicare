@@ -1,6 +1,6 @@
 
 import { calculateDistance, getRandomImageId } from '@/utils/facilityUtils';
-import { Facility } from '@/types/facility';
+import { Facility, OverpassElement } from '@/types/facility';
 
 export const searchNearbyFacilities = async (
   latitude: number,
@@ -37,13 +37,23 @@ export const searchNearbyFacilities = async (
     
     let overpassQuery = '';
     if (selectedDistrict && selectedDistrict !== 'all' && districtName) {
+      // District-specific query
       overpassQuery = `
         [out:json];
         area[name~"${districtName}"]->.searchArea;
         node["amenity"~"${amenityType}"](area.searchArea);
         out body;
       `;
+    } else if (selectedState && selectedState !== 'all' && stateName) {
+      // State-specific query
+      overpassQuery = `
+        [out:json];
+        area[name~"${stateName}"]->.searchArea;
+        node["amenity"~"${amenityType}"](area.searchArea);
+        out body;
+      `;
     } else {
+      // Radius-based query
       overpassQuery = `
         [out:json];
         node["amenity"~"${amenityType}"](around:${radius},${latitude},${longitude});
@@ -69,7 +79,7 @@ export const searchNearbyFacilities = async (
     
     if (!data.elements || data.elements.length === 0) {
       console.log('⚠️ No results from OpenStreetMap API');
-      if (selectedDistrict && selectedDistrict !== 'all') {
+      if ((selectedDistrict && selectedDistrict !== 'all') || (selectedState && selectedState !== 'all')) {
         console.log('🔄 Trying fallback radius-based search');
         const fallbackQuery = `
           [out:json];
@@ -97,7 +107,7 @@ export const searchNearbyFacilities = async (
       }
     }
     
-    const allFacilities: Facility[] = data.elements.map((element: any) => {
+    const allFacilities: Facility[] = data.elements.map((element: OverpassElement) => {
       const facilityLat = element.lat;
       const facilityLon = element.lon;
       const distance = calculateDistance(latitude, longitude, facilityLat, facilityLon);

@@ -16,6 +16,8 @@ import { indianStates, State } from "@/data/indianStates";
 interface HospitalSearchControlsProps {
   facilityType: string;
   setFacilityType: (value: string) => void;
+  selectedState: string;
+  setSelectedState: (value: string) => void;
   selectedDistrict: string;
   setSelectedDistrict: (value: string) => void;
   searchQuery: string;
@@ -28,6 +30,8 @@ interface HospitalSearchControlsProps {
 export const HospitalSearchControls = ({
   facilityType,
   setFacilityType,
+  selectedState,
+  setSelectedState,
   selectedDistrict,
   setSelectedDistrict,
   searchQuery,
@@ -37,7 +41,6 @@ export const HospitalSearchControls = ({
   isLoading
 }: HospitalSearchControlsProps) => {
   const [searchMethod, setSearchMethod] = useState<"location" | "stateDistrict">("location");
-  const [selectedState, setSelectedState] = useState<string>("UP");
 
   // Get districts for selected state
   const getDistrictsForState = (stateCode: string) => {

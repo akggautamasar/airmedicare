@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Facility } from '@/types/facility';
 import { calculateDistance } from '@/utils/facilityUtils';
@@ -30,7 +29,7 @@ export const searchFacilitiesInDatabase = async (
       console.log(`🔍 Database search: Filtering strictly for district: ${districtName}`);
       query = query.ilike('district', `%${districtName}%`);
     } 
-    else if (selectedState && stateName) {
+    else if (selectedState && selectedState !== 'all' && stateName) {
       console.log(`🔍 Database search: Filtering for state: ${stateName}`);
       query = query.ilike('state', `%${stateName}%`);
     }
@@ -83,6 +82,13 @@ export const searchFacilitiesInDatabase = async (
       
       console.log(`🔍 After verification: ${verifiedResults.length} facilities match district "${districtName}"`);
       return verifiedResults;
+    } else if (selectedState && selectedState !== 'all' && stateName) {
+      const verifiedResults = formattedResults.filter(facility => {
+        return facility.address?.toLowerCase().includes(stateName.toLowerCase());
+      });
+      
+      console.log(`🔍 After verification: ${verifiedResults.length} facilities match state "${stateName}"`);
+      return verifiedResults.length > 0 ? verifiedResults : formattedResults;
     }
     
     return formattedResults;
