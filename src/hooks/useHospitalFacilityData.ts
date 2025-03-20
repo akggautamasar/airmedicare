@@ -114,7 +114,8 @@ export const useHospitalFacilityData = () => {
     selectedDistrict: string,
     searchQuery: string,
     userLocation: { latitude: number, longitude: number } | null,
-    geocodeDistrict: (district: string) => Promise<{lat: number, lon: number} | null>
+    geocodeDistrict: (district: string) => Promise<{lat: number, lon: number} | null>,
+    selectedState?: string
   ) => {
     setIsLoading(true);
     try {
